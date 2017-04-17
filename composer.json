@@ -1,0 +1,17 @@
+{
+    "name": "jdwil/xsd-tool",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "JD Williams",
+            "email": "me@jdwilliams.xyz"
+        }
+    ],
+    "autoload" : {
+        "psr-4" : {
+            "JDWil\\Xsd\\" : "src/"
+        }
+    },
+    "require": {}
+}
