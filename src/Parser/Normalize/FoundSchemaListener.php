@@ -33,7 +33,7 @@ class FoundSchemaListener implements EventListenerInterface
         $definition = $event->getDefinition();
 
         $namespace = Schema::determineNamespace($node);
-        $schema = Schema::forNamespace($namespace);
+        $schema = new Schema($namespace, $node);
         $definition->addSchema($schema);
     }
 }

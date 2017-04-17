@@ -44,6 +44,6 @@ class FoundSimpleTypeListener implements EventListenerInterface
             }
         }
 
-        $definition->getSchemaForNode($node)->addType(new SimpleType($name, $baseType));
+        $definition->getSchemaForNode($node)->addType(new SimpleType($name, $baseType, $node));
     }
 }
