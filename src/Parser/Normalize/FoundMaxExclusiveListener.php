@@ -3,16 +3,15 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Parser\Normalize;
 
-use JDWil\Xsd\Element\Annotation;
 use JDWil\Xsd\Event\EventInterface;
-use JDWil\Xsd\Event\EventListenerInterface;
-use JDWil\Xsd\Event\FoundAnnotationEvent;
+use JDWil\Xsd\Event\FoundMaxExclusiveEvent;
+use JDWil\Xsd\Facet\MaxExclusive;
 
 /**
- * Class FoundAnnotationListener
+ * Class FoundMaxExclusiveListener
  * @package JDWil\Xsd\Parser\Normalize
  */
-class FoundAnnotationListener extends AbstractNormalizerListener implements EventListenerInterface
+class FoundMaxExclusiveListener extends AbstractNormalizerListener
 {
     /**
      * @param EventInterface $event
@@ -20,16 +19,15 @@ class FoundAnnotationListener extends AbstractNormalizerListener implements Even
      */
     public function canHandle(EventInterface $event): bool
     {
-        return $event instanceof FoundAnnotationEvent;
+        return $event instanceof FoundMaxExclusiveEvent;
     }
 
     /**
      * @param EventInterface $event
      * @return void
-     * @throws \ReflectionException
      */
     public function handle(EventInterface $event)
     {
-        $this->addNode($event, [Annotation::class, 'fromElement']);
+        $this->addFacet($event, MaxExclusive::class);
     }
 }

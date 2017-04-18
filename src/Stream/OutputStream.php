@@ -38,4 +38,12 @@ class OutputStream
     {
         fwrite($this->handle, $data);
     }
+
+    /**
+     * @param string $data
+     */
+    public function writeLine(string $data)
+    {
+        fwrite($this->handle, sprintf("%s\n", $data));
+    }
 }

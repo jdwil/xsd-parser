@@ -55,4 +55,9 @@ interface ElementInterface
      * @return \DOMNode
      */
     public function getNode(): \DOMNode;
+
+    /**
+     * @return Schema
+     */
+    public function getSchema(): Schema;
 }

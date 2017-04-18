@@ -3,16 +3,15 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Parser\Normalize;
 
-use JDWil\Xsd\Element\Annotation;
 use JDWil\Xsd\Event\EventInterface;
-use JDWil\Xsd\Event\EventListenerInterface;
-use JDWil\Xsd\Event\FoundAnnotationEvent;
+use JDWil\Xsd\Event\FoundMaxLengthEvent;
+use JDWil\Xsd\Facet\MaxLength;
 
 /**
- * Class FoundAnnotationListener
+ * Class FoundMaxLengthListener
  * @package JDWil\Xsd\Parser\Normalize
  */
-class FoundAnnotationListener extends AbstractNormalizerListener implements EventListenerInterface
+class FoundMaxLengthListener extends AbstractNormalizerListener
 {
     /**
      * @param EventInterface $event
@@ -20,16 +19,15 @@ class FoundAnnotationListener extends AbstractNormalizerListener implements Even
      */
     public function canHandle(EventInterface $event): bool
     {
-        return $event instanceof FoundAnnotationEvent;
+        return $event instanceof FoundMaxLengthEvent;
     }
 
     /**
      * @param EventInterface $event
      * @return void
-     * @throws \ReflectionException
      */
     public function handle(EventInterface $event)
     {
-        $this->addNode($event, [Annotation::class, 'fromElement']);
+        $this->addFacet($event, MaxLength::class);
     }
 }

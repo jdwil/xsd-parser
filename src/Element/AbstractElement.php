@@ -153,4 +153,21 @@ abstract class AbstractElement implements ElementInterface
     {
         return $this->childElements;
     }
+
+    /**
+     * @return Schema
+     */
+    public function getSchema(): Schema
+    {
+        if ($this instanceof Schema) {
+            return $this;
+        }
+
+        $element = $this;
+        do {
+            $element = $element->getParent();
+        } while (!$element instanceof Schema);
+
+        return $element;
+    }
 }

@@ -20,6 +20,32 @@ class EventDispatcher implements EventDispatcherInterface
     }
 
     /**
+     * @return EventDispatcher
+     */
+    public static function forNormalization(): EventDispatcher
+    {
+        $globPath = __dir__ . '/../Parser/Normalize/*.php';
+        foreach (glob($globPath) as $file) {
+            include $file;
+        }
+
+        $ret = new EventDispatcher();
+        foreach (get_declared_classes() as $className) {
+            if (strpos($className, 'JDWil\\Xsd\\Parser\\Normalize') === 0 &&
+                strpos($className, 'Abstract') === false
+            ) {
+                if (strpos($className, 'FoundImportListener') !== false) {
+                    $ret->registerListener(new $className($ret));
+                } else {
+                    $ret->registerListener(new $className);
+                }
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
      * @param EventInterface $event
      * @return mixed
      */

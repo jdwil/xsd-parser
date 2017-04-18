@@ -79,4 +79,20 @@ class Definition
 
         return $ret;
     }
+
+    public function getElementByName(string $name)
+    {
+        foreach ($this->elements as $element) {
+            if (method_exists($element, 'getName') && $element->getName() === $name) {
+                return $element;
+            }
+        }
+
+        return null;
+    }
+
+    public function reduceType(string $type)
+    {
+
+    }
 }

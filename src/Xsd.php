@@ -4,11 +4,13 @@ declare(strict_types=1);
 namespace JDWil\Xsd;
 
 use JDWil\Xsd\DOM\Definition;
+use JDWil\Xsd\Element\ComplexType;
 use JDWil\Xsd\Element\ElementInterface;
 use JDWil\Xsd\Event\EventDispatcher;
 use JDWil\Xsd\Exception\DocumentException;
 use JDWil\Xsd\Log\Logger;
 use JDWil\Xsd\Log\LoggerInterface;
+use JDWil\Xsd\Output\Php\ClassGenerator;
 use JDWil\Xsd\Parser\Normalize\FoundAllListener;
 use JDWil\Xsd\Parser\Normalize\FoundAnnotationListener;
 use JDWil\Xsd\Parser\Normalize\FoundAttributeGroupListener;
@@ -79,30 +81,21 @@ class Xsd
     public function dumpInfo()
     {
         $this->options = new Options();
+        $this->options->namespacePrefix = 'JDWil\\Test';
         $this->loadDocument();
 
         $definition = new Definition();
-        $dispatcher = new EventDispatcher();
-        $dispatcher->registerListener(new FoundImportListener($dispatcher));
-        $dispatcher->registerListener(new FoundSchemaListener());
-        $dispatcher->registerListener(new FoundSimpleTypeListener());
-        $dispatcher->registerListener(new FoundAttributeListener());
-        $dispatcher->registerListener(new FoundAllListener());
-        $dispatcher->registerListener(new FoundAnnotationListener());
-        $dispatcher->registerListener(new FoundComplexTypeListener());
-        $dispatcher->registerListener(new FoundAttributeGroupListener());
-        $dispatcher->registerListener(new FoundExtensionListener());
-        $dispatcher->registerListener(new FoundSimpleContentListener());
+        $dispatcher = EventDispatcher::forNormalization();
 
         $parser = new Parser($definition, $dispatcher);
         $parser->parse($this->document);
-        /*
-        $normalizer = new XsdNormalizer();
-        $definition = $normalizer->normalize($this->document);
-        */
-        echo count($definition->getElements());
-        //$translator = new PlainTextTranslator();
-        //$translator->translate($this->document, OutputStream::streamedTo('php://stdout'));
+
+        foreach ($definition->getElements() as $element) {
+            if ($element instanceof ComplexType && $element->getName() === 'CT_Sheet') {
+                $generator = new ClassGenerator($this->options);
+                $generator->generate($element);
+            }
+        }
     }
 
     /**

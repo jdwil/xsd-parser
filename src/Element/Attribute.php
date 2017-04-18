@@ -86,4 +86,60 @@ class Attribute extends IdentifiableElement
 
         parent::__construct($id);
     }
+
+    /**
+     * @return string
+     */
+    public function getDefault()
+    {
+        return $this->default;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFixed()
+    {
+        return $this->fixed;
+    }
+
+    /**
+     * @return string
+     */
+    public function getForm()
+    {
+        return $this->form;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRef()
+    {
+        return $this->ref;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUse()
+    {
+        return $this->use;
+    }
 }

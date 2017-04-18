@@ -42,7 +42,12 @@ class Schema extends IdentifiableElement
     /**
      * @var string
      */
-    protected $xmins;
+    protected $xmlns;
+
+    /**
+     * @var array
+     */
+    protected $namespaces;
 
     /**
      * Schema constructor.
@@ -53,7 +58,7 @@ class Schema extends IdentifiableElement
      * @param string|null $finalDefault
      * @param string|null $targetNamespace
      * @param string|null $version
-     * @param string|null $xmins
+     * @param string|null $xmlns
      */
     public function __construct(
         string $id = null,
@@ -63,7 +68,7 @@ class Schema extends IdentifiableElement
         string $finalDefault = null,
         string $targetNamespace = null,
         string $version = null,
-        string $xmins = null
+        string $xmlns = null
     ) {
         $this->attributeFormDefault = $attributeFormDefault;
         $this->elementFormDefault = $elementFormDefault;
@@ -71,10 +76,84 @@ class Schema extends IdentifiableElement
         $this->finalDefault = $finalDefault;
         $this->targetNamespace = $targetNamespace;
         $this->version = $version;
-        $this->xmins = $xmins;
+        $this->xmlns = $xmlns;
 
         $this->attributeElements = [];
+        $this->namespaces = [];
 
         parent::__construct($id);
+    }
+
+    /**
+     * @return string
+     */
+    public function getAttributeFormDefault(): string
+    {
+        return $this->attributeFormDefault;
+    }
+
+    /**
+     * @return string
+     */
+    public function getElementFormDefault()
+    {
+        return $this->elementFormDefault;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBlockDefault()
+    {
+        return $this->blockDefault;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFinalDefault()
+    {
+        return $this->finalDefault;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTargetNamespace()
+    {
+        return $this->targetNamespace;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVersion()
+    {
+        return $this->version;
+    }
+
+    /**
+     * @return string
+     */
+    public function getXmlns()
+    {
+        return $this->xmlns;
+    }
+
+    /**
+     * @param string $alias
+     * @param string $value
+     */
+    public function addNamespace(string $alias, string $value)
+    {
+        $this->namespaces[$alias] = $value;
+    }
+
+    /**
+     * @return array
+     */
+    public function getNamespaces(): array
+    {
+        return $this->namespaces;
     }
 }

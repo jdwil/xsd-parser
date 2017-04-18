@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Element;
 
+use JDWil\Xsd\Facet\FacetInterface;
+
 /**
  * Class Restriction
  * @package JDWil\Xsd\Element
@@ -15,6 +17,11 @@ class Restriction extends IdentifiableElement
     protected $base;
 
     /**
+     * @var FacetInterface[]
+     */
+    protected $facets;
+
+    /**
      * Restriction constructor.
      * @param string $base
      * @param string|null $id
@@ -23,5 +30,21 @@ class Restriction extends IdentifiableElement
     {
         $this->base = $base;
         parent::__construct($id);
+    }
+
+    /**
+     * @param FacetInterface $facet
+     */
+    public function addFacet(FacetInterface $facet)
+    {
+        $this->facets[] = $facet;
+    }
+
+    /**
+     * @return array
+     */
+    public function getFacets(): array
+    {
+        return $this->facets;
     }
 }

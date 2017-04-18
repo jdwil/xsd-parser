@@ -58,4 +58,44 @@ class ComplexType extends IdentifiableElement
         $this->final = $final;
         parent::__construct($id);
     }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAbstract(): bool
+    {
+        return $this->abstract;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isMixed(): bool
+    {
+        return $this->mixed;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBlock(): string
+    {
+        return $this->block;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFinal(): string
+    {
+        return $this->final;
+    }
 }

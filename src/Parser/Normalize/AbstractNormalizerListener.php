@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace JDWil\Xsd\Parser\Normalize;
 
 use JDWil\Xsd\Element\ElementInterface;
+use JDWil\Xsd\Element\Restriction;
 use JDWil\Xsd\Event\EventInterface;
 use JDWil\Xsd\Event\EventListenerInterface;
+use JDWil\Xsd\Facet\FacetInterface;
 
 /**
  * Class AbstractNormalizerListener
@@ -31,5 +33,21 @@ abstract class AbstractNormalizerListener implements EventListenerInterface
         }
         $parent->addChildElement($type);
         $type->setParent($parent);
+    }
+
+    /**
+     * @param EventInterface $event
+     * @param string $className
+     */
+    protected function addFacet(EventInterface $event, string $className)
+    {
+        $node = $event->getNode();
+        $definition = $event->getDefinition();
+        /** @var FacetInterface $type */
+        $type = new $className($node->getAttribute('value'));
+        $parent = $definition->findElementByNode($node->parentNode);
+        if ($parent instanceof Restriction) {
+            $parent->addFacet($type);
+        }
     }
 }

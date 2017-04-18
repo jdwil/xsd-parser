@@ -7,7 +7,7 @@ namespace JDWil\Xsd\Element;
  * Class AppInfo
  * @package JDWil\Xsd\Element
  */
-class AppInfo extends AbstractElement
+class Appinfo extends AbstractElement
 {
     /**
      * @var null|string

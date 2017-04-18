@@ -39,6 +39,16 @@ class FoundSchemaListener implements EventListenerInterface
 
         /** @var Schema $schema */
         $schema = Schema::fromElement($node);
+
+        /**
+         * DOMDocument can't get the namespaces, so use XPath.
+         */
+        $xpath = new \DOMXPath($node->ownerDocument);
+        foreach ($xpath->query('namespace::*') as $nsNode) {
+            /** @var \DOMNameSpaceNode $nsNode */
+            $schema->addNamespace($nsNode->localName, $nsNode->nodeValue);
+        }
+
         $schema->setNode($node);
         $definition->addElement($schema);
     }

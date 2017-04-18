@@ -3,16 +3,16 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Parser\Normalize;
 
-use JDWil\Xsd\Element\Annotation;
+use JDWil\Xsd\Element\Element;
 use JDWil\Xsd\Event\EventInterface;
 use JDWil\Xsd\Event\EventListenerInterface;
-use JDWil\Xsd\Event\FoundAnnotationEvent;
+use JDWil\Xsd\Event\FoundElementEvent;
 
 /**
- * Class FoundAnnotationListener
+ * Class FoundElementListener
  * @package JDWil\Xsd\Parser\Normalize
  */
-class FoundAnnotationListener extends AbstractNormalizerListener implements EventListenerInterface
+class FoundElementListener extends AbstractNormalizerListener implements EventListenerInterface
 {
     /**
      * @param EventInterface $event
@@ -20,7 +20,7 @@ class FoundAnnotationListener extends AbstractNormalizerListener implements Even
      */
     public function canHandle(EventInterface $event): bool
     {
-        return $event instanceof FoundAnnotationEvent;
+        return $event instanceof FoundElementEvent;
     }
 
     /**
@@ -30,6 +30,6 @@ class FoundAnnotationListener extends AbstractNormalizerListener implements Even
      */
     public function handle(EventInterface $event)
     {
-        $this->addNode($event, [Annotation::class, 'fromElement']);
+        $this->addNode($event, [Element::class, 'fromElement']);
     }
 }
