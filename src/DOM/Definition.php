@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\DOM;
 
+use JDWil\Xsd\Element\AbstractElement;
+use JDWil\Xsd\Element\ElementInterface;
 use JDWil\Xsd\Element\Schema;
 
 /**
@@ -12,98 +14,69 @@ use JDWil\Xsd\Element\Schema;
 class Definition
 {
     /**
-     * @var Schema[]
+     * @var AbstractElement[]
      */
-    private $schemas;
+    private $elements;
 
     /**
      * Definition constructor.
      */
     public function __construct()
     {
-        $this->schemas = [];
+        $this->elements = [];
     }
 
     /**
-     * @param Schema $schema
+     * @param ElementInterface $element
      */
-    public function addSchema(Schema $schema)
+    public function addElement(ElementInterface $element)
     {
-        $this->schemas[$schema->getNamespace()] = $schema;
+        $this->elements[] = $element;
     }
 
     /**
      * @return array
      */
-    public function getTypes(): array
+    public function getElements(): array
     {
-        $ret = [];
-        foreach ($this->schemas as $schema) {
-            $ret = array_merge($ret, $schema->getTypes());
-        }
-
-        return $ret;
-    }
-
-    /**
-     * @param string $name
-     * @return Type|null
-     */
-    public function findType(string $name)
-    {
-        foreach ($this->schemas as $schema) {
-            if ($type = $schema->findType($name)) {
-                return $type;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param \DOMElement $node
-     * @return Schema
-     */
-    public function getSchemaForNode(\DOMElement $node): Schema
-    {
-        $parent = $node->parentNode;
-        return $this->schemas[Schema::determineNamespace($parent)];
-    }
-
-    /**
-     * @param string $namespace
-     * @return bool
-     */
-    public function schemaLoaded(string $namespace): bool
-    {
-        foreach ($this->schemas as $schema) {
-            if ($schema->getNamespace() === $namespace) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->elements;
     }
 
     /**
      * @param \DOMNode $node
-     * @return Type|null
+     * @return ElementInterface|null
      */
-    public function findObjectForNode(\DOMNode $node)
-    {
-        foreach ($this->schemas as $schema) {
-            if ($schema->isForNode($node)) {
-                return $schema;
-            }
-
-            foreach ($schema->getTypes() as $type) {
-                /** @var Type $type */
-                if ($type->isForNode($node)) {
-                    return $type;
-                }
+    public function findElementByNode(\DOMNode $node) {
+        foreach ($this->elements as $element) {
+            if ($element->getNode()->isSameNode($node)) {
+                return $element;
             }
         }
 
         return null;
+    }
+
+    /**
+     * @return array
+     */
+    public function getSchemas(): array
+    {
+        return $this->getElementsByType(Schema::class);
+    }
+
+    /**
+     * @param string $type
+     * @return array
+     */
+    public function getElementsByType(string $type): array
+    {
+        $ret = [];
+        foreach ($this->elements as $element) {
+            if (get_class($element) === $type) {
+                $ret[] = $element;
+            }
+        }
+
+        return $ret;
     }
 }

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Element;
 
-
 use JDWil\Xsd\Exception\ValidationException;
 
 /**

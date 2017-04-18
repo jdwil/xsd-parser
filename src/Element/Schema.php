@@ -72,6 +72,9 @@ class Schema extends IdentifiableElement
         $this->targetNamespace = $targetNamespace;
         $this->version = $version;
         $this->xmins = $xmins;
+
+        $this->attributeElements = [];
+
         parent::__construct($id);
     }
 }

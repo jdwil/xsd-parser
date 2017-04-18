@@ -4,12 +4,20 @@ declare(strict_types=1);
 namespace JDWil\Xsd;
 
 use JDWil\Xsd\DOM\Definition;
+use JDWil\Xsd\Element\ElementInterface;
 use JDWil\Xsd\Event\EventDispatcher;
 use JDWil\Xsd\Exception\DocumentException;
 use JDWil\Xsd\Log\Logger;
 use JDWil\Xsd\Log\LoggerInterface;
+use JDWil\Xsd\Parser\Normalize\FoundAllListener;
+use JDWil\Xsd\Parser\Normalize\FoundAnnotationListener;
+use JDWil\Xsd\Parser\Normalize\FoundAttributeGroupListener;
+use JDWil\Xsd\Parser\Normalize\FoundAttributeListener;
+use JDWil\Xsd\Parser\Normalize\FoundComplexTypeListener;
+use JDWil\Xsd\Parser\Normalize\FoundExtensionListener;
 use JDWil\Xsd\Parser\Normalize\FoundImportListener;
 use JDWil\Xsd\Parser\Normalize\FoundSchemaListener;
+use JDWil\Xsd\Parser\Normalize\FoundSimpleContentListener;
 use JDWil\Xsd\Parser\Normalize\FoundSimpleTypeListener;
 use JDWil\Xsd\Parser\Parser;
 use JDWil\Xsd\Parser\XsdNormalizer;
@@ -78,6 +86,13 @@ class Xsd
         $dispatcher->registerListener(new FoundImportListener($dispatcher));
         $dispatcher->registerListener(new FoundSchemaListener());
         $dispatcher->registerListener(new FoundSimpleTypeListener());
+        $dispatcher->registerListener(new FoundAttributeListener());
+        $dispatcher->registerListener(new FoundAllListener());
+        $dispatcher->registerListener(new FoundAnnotationListener());
+        $dispatcher->registerListener(new FoundComplexTypeListener());
+        $dispatcher->registerListener(new FoundAttributeGroupListener());
+        $dispatcher->registerListener(new FoundExtensionListener());
+        $dispatcher->registerListener(new FoundSimpleContentListener());
 
         $parser = new Parser($definition, $dispatcher);
         $parser->parse($this->document);
@@ -85,10 +100,7 @@ class Xsd
         $normalizer = new XsdNormalizer();
         $definition = $normalizer->normalize($this->document);
         */
-        foreach ($definition->getTypes() as $type) {
-            echo "Type: " . $type->getName() . " Base Type: " . $type->getBaseType() . "\n";
-        }
-
+        echo count($definition->getElements());
         //$translator = new PlainTextTranslator();
         //$translator->translate($this->document, OutputStream::streamedTo('php://stdout'));
     }

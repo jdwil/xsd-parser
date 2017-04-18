@@ -17,7 +17,7 @@ interface EventListenerInterface
 
     /**
      * @param EventInterface $event
-     * @return mixed
+     * @return void
      */
     public function handle(EventInterface $event);
 }

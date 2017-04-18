@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Parser\Normalize;
 
-use JDWil\Xsd\DOM\Schema;
+use JDWil\Xsd\Element\Schema;
 use JDWil\Xsd\Event\EventInterface;
 use JDWil\Xsd\Event\EventListenerInterface;
 use JDWil\Xsd\Event\FoundSchemaEvent;
@@ -25,15 +25,21 @@ class FoundSchemaListener implements EventListenerInterface
 
     /**
      * @param EventInterface $event
-     * @return mixed
+     * @return void
+     * @throws \ReflectionException
      */
     public function handle(EventInterface $event)
     {
         $node = $event->getNode();
         $definition = $event->getDefinition();
 
-        $namespace = Schema::determineNamespace($node);
-        $schema = new Schema($namespace, $node);
-        $definition->addSchema($schema);
+        if ($definition->findElementByNode($node)) {
+            return;
+        }
+
+        /** @var Schema $schema */
+        $schema = Schema::fromElement($node);
+        $schema->setNode($node);
+        $definition->addElement($schema);
     }
 }

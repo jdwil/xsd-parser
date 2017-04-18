@@ -3,16 +3,16 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Parser\Normalize;
 
-use JDWil\Xsd\Element\SimpleType;
+use JDWil\Xsd\Element\Any;
 use JDWil\Xsd\Event\EventInterface;
 use JDWil\Xsd\Event\EventListenerInterface;
-use JDWil\Xsd\Event\FoundSimpleTypeEvent;
+use JDWil\Xsd\Event\FoundAnyEvent;
 
 /**
- * Class FoundSimpleTypeListener
+ * Class FoundAnyListener
  * @package JDWil\Xsd\Parser\Normalize
  */
-class FoundSimpleTypeListener extends AbstractNormalizerListener implements EventListenerInterface
+class FoundAnyListener extends AbstractNormalizerListener implements EventListenerInterface
 {
     /**
      * @param EventInterface $event
@@ -20,16 +20,15 @@ class FoundSimpleTypeListener extends AbstractNormalizerListener implements Even
      */
     public function canHandle(EventInterface $event): bool
     {
-        return $event instanceof FoundSimpleTypeEvent;
+        return $event instanceof FoundAnyEvent;
     }
 
     /**
      * @param EventInterface $event
-     * @return mixed
-     * @throws \ReflectionException
+     * @return void
      */
     public function handle(EventInterface $event)
     {
-        $this->addNode($event, [SimpleType::class, 'fromElement']);
+        $this->addNode($event, [Any::class, 'fromElement']);
     }
 }
