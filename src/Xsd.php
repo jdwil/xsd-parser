@@ -11,6 +11,7 @@ use JDWil\Xsd\Exception\DocumentException;
 use JDWil\Xsd\Log\Logger;
 use JDWil\Xsd\Log\LoggerInterface;
 use JDWil\Xsd\Output\Php\ClassGenerator;
+use JDWil\Xsd\Output\Php\Processor\ProcessorFactory;
 use JDWil\Xsd\Parser\Normalize\FoundAllListener;
 use JDWil\Xsd\Parser\Normalize\FoundAnnotationListener;
 use JDWil\Xsd\Parser\Normalize\FoundAttributeGroupListener;
@@ -82,6 +83,7 @@ class Xsd
     {
         $this->options = new Options();
         $this->options->namespacePrefix = 'JDWil\\Test';
+        $this->options->outputDirectory = __DIR__ . '/../test-dir';
         $this->loadDocument();
 
         $definition = new Definition();
@@ -89,11 +91,12 @@ class Xsd
 
         $parser = new Parser($definition, $dispatcher);
         $parser->parse($this->document);
+        $factory = new ProcessorFactory($this->options);
 
         foreach ($definition->getElements() as $element) {
             if ($element instanceof ComplexType && $element->getName() === 'CT_Sheet') {
-                $generator = new ClassGenerator($this->options, $definition);
-                $generator->generate($element);
+                $generator = new ClassGenerator($this->options, $definition, $factory);
+                $generator->generate();
             }
         }
     }

@@ -233,6 +233,14 @@ class ClassBuilder
     }
 
     /**
+     * @return string
+     */
+    public function getClassName(): string
+    {
+        return $this->className;
+    }
+
+    /**
      * @param OutputStream $stream
      */
     public function writeTo(OutputStream $stream)
@@ -392,12 +400,8 @@ class ClassBuilder
         }
         $stream->write(sprintf('%s $%s', $type, $property->name));
         if ($property->default) {
-            if (!empty($property->enumerations) && $this->isNonPrimitiveWithDefault($property)) {
-                $stream->write(sprintf(' = %s::VALUE_%s', $property->type, strtoupper($property->default)));
-            } else {
-                $default = is_string($property->default) ? sprintf("'%s'", $property->default) : $property->default;
-                $stream->write(sprintf(' = %s', $property->default));
-            }
+            $default = is_string($property->default) ? sprintf("'%s'", $property->default) : $property->default;
+            $stream->write(sprintf(' = %s', $default));
         }
     }
 

@@ -5,6 +5,8 @@ namespace JDWil\Xsd;
 
 class Options
 {
+    public $outputDirectory;
+
     public $debug;
 
     public $verbose;
