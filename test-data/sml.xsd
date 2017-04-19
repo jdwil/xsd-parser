@@ -1,0 +1,21 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://purl.oclc.org/ooxml/spreadsheetml/main" xmlns:s="http://purl.oclc.org/ooxml/officeDocument/sharedTypes" targetNamespace="http://purl.oclc.org/ooxml/spreadsheetml/main" elementFormDefault="qualified">
+  <xsd:import namespace="http://purl.oclc.org/ooxml/officeDocument/sharedTypes" schemaLocation="shared-commonSimpleTypes.xsd"/>
+  <xsd:complexType name="CT_Sheets">
+    <xsd:sequence>
+      <xsd:element name="sheet" type="CT_Sheet" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CT_Sheet">
+    <xsd:attribute name="name" type="s:ST_Xstring" use="required"/>
+    <xsd:attribute name="sheetId" type="xsd:unsignedInt" use="required"/>
+    <xsd:attribute name="state" type="ST_SheetState" use="optional" default="visible"/>
+    <xsd:attribute ref="r:id" use="required"/>
+  </xsd:complexType>
+  <xsd:simpleType name="ST_SheetState">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="visible"/>
+      <xsd:enumeration value="hidden"/>
+      <xsd:enumeration value="veryHidden"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+</xsd:schema>

@@ -57,7 +57,7 @@ class Definition
     }
 
     /**
-     * @return array
+     * @return Schema[]
      */
     public function getSchemas(): array
     {
@@ -80,19 +80,25 @@ class Definition
         return $ret;
     }
 
-    public function getElementByName(string $name)
+    /**
+     * @param string $name
+     * @param string|null $namespace
+     * @return AbstractElement|mixed|null
+     */
+    public function findElementByName(string $name, string $namespace = null)
     {
-        foreach ($this->elements as $element) {
-            if (method_exists($element, 'getName') && $element->getName() === $name) {
-                return $element;
+        foreach ($this->getSchemas() as $schema) {
+            if (null !== $namespace && $schema->getXmlns() !== $namespace) {
+                continue;
+            }
+
+            foreach ($schema->getChildren() as $element) {
+                if (method_exists($element, 'getName') && $element->getName() === $name) {
+                    return $element;
+                }
             }
         }
 
         return null;
-    }
-
-    public function reduceType(string $type)
-    {
-
     }
 }

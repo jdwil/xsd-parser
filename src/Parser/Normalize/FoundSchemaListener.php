@@ -46,7 +46,11 @@ class FoundSchemaListener implements EventListenerInterface
         $xpath = new \DOMXPath($node->ownerDocument);
         foreach ($xpath->query('namespace::*') as $nsNode) {
             /** @var \DOMNameSpaceNode $nsNode */
-            $schema->addNamespace($nsNode->localName, $nsNode->nodeValue);
+            if ($nsNode->localName === 'xmlns') {
+                $schema->setXmlns($nsNode->nodeValue);
+            } else {
+                $schema->addNamespace($nsNode->localName, $nsNode->nodeValue);
+            }
         }
 
         $schema->setNode($node);

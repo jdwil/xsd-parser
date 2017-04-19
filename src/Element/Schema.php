@@ -141,6 +141,14 @@ class Schema extends IdentifiableElement
     }
 
     /**
+     * @param string $xmlns
+     */
+    public function setXmlns(string $xmlns)
+    {
+        $this->xmlns = $xmlns;
+    }
+
+    /**
      * @param string $alias
      * @param string $value
      */
@@ -155,5 +163,14 @@ class Schema extends IdentifiableElement
     public function getNamespaces(): array
     {
         return $this->namespaces;
+    }
+
+    /**
+     * @param string $alias
+     * @return string
+     */
+    public function findNamespaceByAlias(string $alias): string
+    {
+        return $this->namespaces[$alias];
     }
 }

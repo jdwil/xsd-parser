@@ -17,6 +17,8 @@ class Options
 
     public $propertyVisibility;
 
+    public $phpVersion;
+
     public function __construct()
     {
         $this->debug = false;
@@ -25,6 +27,7 @@ class Options
         $this->docComment = null;
         $this->namespacePrefix = '';
         $this->propertyVisibility = 'private';
+        $this->phpVersion = '7.0';
     }
 
     public static function forDebugging(): Options

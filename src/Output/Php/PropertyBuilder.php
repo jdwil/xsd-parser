@@ -36,12 +36,18 @@ class PropertyBuilder
     private $fixed;
 
     /**
+     * @var array
+     */
+    private $enumerations;
+
+    /**
      * PropertyBuilder constructor.
      */
     public function __construct()
     {
         $this->required = false;
         $this->fixed = false;
+        $this->enumerations = [];
     }
 
     /**
@@ -55,6 +61,7 @@ class PropertyBuilder
         $ret->default = $this->default;
         $ret->required = $this->required;
         $ret->fixed = $this->fixed;
+        $ret->enumerations = $this->enumerations;
 
         return $ret;
     }
@@ -106,6 +113,16 @@ class PropertyBuilder
     public function setFixed(bool $fixed): PropertyBuilder
     {
         $this->fixed = $fixed;
+        return $this;
+    }
+
+    /**
+     * @param string $value
+     * @return PropertyBuilder
+     */
+    public function addEnumeration(string $value): PropertyBuilder
+    {
+        $this->enumerations[] = $value;
         return $this;
     }
 }

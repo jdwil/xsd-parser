@@ -9,5 +9,8 @@ namespace JDWil\Xsd\Facet;
  */
 interface FacetInterface
 {
-
+    /**
+     * @return string
+     */
+    public function getValue(): string;
 }

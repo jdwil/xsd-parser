@@ -60,4 +60,16 @@ interface ElementInterface
      * @return Schema
      */
     public function getSchema(): Schema;
+
+    /**
+     * @return string
+     */
+    public function getNamespace(): string;
+
+    /**
+     * @param string $type
+     * @param bool $recurse
+     * @return bool
+     */
+    public function hasChildType(string $type, bool $recurse = false): bool;
 }

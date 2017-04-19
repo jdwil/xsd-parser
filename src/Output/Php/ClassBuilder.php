@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace JDWil\Xsd\Output\Php;
 
 use JDWil\Xsd\Exception\ValidationException;
+use JDWil\Xsd\Options;
 use JDWil\Xsd\Stream\OutputStream;
+use JDWil\Xsd\Util\TypeUtil;
 
 /**
  * Class ClassBuilder
@@ -18,6 +20,11 @@ class ClassBuilder
     const TYPE_CLASS = 'class';
     const TYPE_INTERFACE = 'interface';
     const TYPE_TRAIT = 'trait';
+
+    /**
+     * @var Options
+     */
+    private $options;
 
     /**
      * @var array
@@ -82,15 +89,16 @@ class ClassBuilder
     /**
      * ClassBuilder constructor.
      */
-    public function __construct()
+    public function __construct(Options $options)
     {
+        $this->options = $options;
         $this->declarations = [];
         $this->uses = [];
         $this->namespace = '';
         $this->docBlock = '';
         $this->classComment = '';
         $this->classModifiers = [];
-        $this->classType = self::TYPE_CLASS,
+        $this->classType = self::TYPE_CLASS;
         $this->className = '';
         $this->classExtends = '';
         $this->classImplements = [];
@@ -169,7 +177,7 @@ class ClassBuilder
      */
     public function setClassType(string $classType): ClassBuilder
     {
-        if (!in_array($classType, [self::TYPE_CLASS, self::TYPE_INTERFACE, self::TYPE_TRAIT])) {
+        if (!in_array($classType, [self::TYPE_CLASS, self::TYPE_INTERFACE, self::TYPE_TRAIT], true)) {
             throw new ValidationException('Class type must be class, interface or trait');
         }
         $this->classType = $classType;
@@ -224,6 +232,9 @@ class ClassBuilder
         return new PropertyBuilder();
     }
 
+    /**
+     * @param OutputStream $stream
+     */
     public function writeTo(OutputStream $stream)
     {
         $stream->writeLine('<?php');
@@ -233,10 +244,12 @@ class ClassBuilder
 
         if (!empty($this->docBlock)) {
             $stream->writeLine($this->docBlock);
+            $stream->write("\n");
         }
 
         if (!empty($this->namespace)) {
-            $stream->writeLine($this->namespace);
+            $stream->writeLine(sprintf('namespace %s;', $this->namespace));
+            $stream->write("\n");
         }
 
         if (count($this->uses)) {
@@ -249,18 +262,141 @@ class ClassBuilder
 
         if (!empty($this->classModifiers)) {
             foreach ($this->classModifiers as $modifier) {
-                $stream->write(sprintf("%s ", $modifier));
+                $stream->write(sprintf('%s ', $modifier));
             }
         }
-        $stream->write(sprintf("%s ", $this->classType));
+        $stream->write(sprintf('%s %s ', $this->classType, $this->className));
 
         if (!empty($this->classExtends)) {
-            $stream->write(sprintf("extends %s ", $this->classExtends));
+            $stream->write(sprintf('extends %s ', $this->classExtends));
         }
 
         if (count($this->classImplements)) {
-            foreach ($this->classImplements as $implements) {
+            $stream->write(sprintf('%s', $this->classImplements[0]));
+            for ($iMax = count($this->classImplements), $i = 1; $i < $iMax; $i++) {
+                $stream->write(sprintf('%s, ', $this->classImplements[$i]));
+            }
+        }
 
+        $stream->write("\n");
+        $stream->writeLine('{');
+
+        if (!empty($this->properties)) {
+            foreach ($this->properties as $key => $property) {
+                $stream->writeLine('    /**');
+                $stream->writeLine(sprintf('     * @var %s', $property->type));
+                $stream->writeLine('     */');
+                $stream->writeLine(sprintf('    private $%s;', $property->name));
+                $stream->write("\n");
+            }
+
+            $stream->writeLine('    /**');
+            $stream->writeLine(sprintf('     * %s constructor', $this->className));
+            $stream->writeLine('     */');
+            $stream->write('    public function __construct(');
+
+            $i = 0;
+            while (isset($this->properties[$i]) && $this->properties[$i]->fixed) {
+                $i++;
+            }
+
+            if (isset($this->properties[$i])) {
+                $this->writeMethodArgument($this->properties[$i], $stream);
+                for ($iMax = count($this->properties), ++$i; $i < $iMax; $i++) {
+                    if (!$this->properties[$i]->fixed) {
+                        $stream->write(', ');
+                        $this->writeMethodArgument($this->properties[$i], $stream);
+                    }
+                }
+            }
+            $stream->writeLine(')');
+            $stream->writeLine('    {');
+            foreach ($this->properties as $property) {
+                if ($property->fixed) {
+                    $value = is_string($property->default) ? sprintf("'%s'", $property->default) : $property->default;
+                    $stream->writeLine(sprintf('        $this->%s = %s;', $property->name, $value));
+                } else if ($this->isNonPrimitiveWithDefault($property)) {
+                    $stream->writeLine(sprintf('        $this->%s = new %s($%s);',
+                        $property->name,
+                        $property->type,
+                        $property->name
+                    ));
+                } else {
+                    $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
+                }
+            }
+            $stream->writeLine('    }');
+            $stream->write("\n");
+
+            foreach ($this->properties as $index => $property) {
+                if ($property->fixed) {
+                    continue;
+                }
+
+                $stream->writeLine('    /**');
+                $stream->writeLine(sprintf('     * @return %s', $property->type));
+                $stream->writeLine('     */');
+                if ($property->required) {
+                    $stream->writeLine(sprintf('    public function get%s(): %s', ucwords($property->name), $property->type));
+                } else {
+                    if ($this->options->phpVersion === '7.0') {
+                        $stream->writeLine(sprintf('    public function get%s()', ucwords($property->name)));
+                    } else {
+                        $stream->writeLine(sprintf('    public function get%s():? %s', ucwords($property->name), $property->type));
+                    }
+                }
+                $stream->writeLine('    {');
+                $stream->writeLine(sprintf('        return $this->%s;', $property->name));
+                $stream->writeLine('    }');
+                $stream->write("\n");
+
+                $stream->writeLine('    /**');
+                $stream->writeLine(sprintf('     * @param %s $%s', $property->type, $property->name));
+                $stream->writeLine('     */');
+                $stream->writeLine(sprintf('    public function set%s(%s $%s)',
+                    ucwords($property->name),
+                    $property->type,
+                    $property->name
+                ));
+                $stream->writeLine('    {');
+                $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
+                $stream->writeLine('    }');
+
+                if (isset($this->properties[$index + 1])) {
+                    $stream->write("\n");
+                }
+            }
+        }
+
+        $stream->writeLine('}');
+    }
+
+    /**
+     * @param \stdClass $property
+     * @return bool
+     */
+    private function isNonPrimitiveWithDefault(\stdClass $property)
+    {
+        return !TypeUtil::isPrimitive($property->type) && $property->default;
+    }
+
+    /**
+     * @param \stdClass $property
+     * @param OutputStream $stream
+     */
+    private function writeMethodArgument(\stdClass $property, OutputStream $stream)
+    {
+        $type = $property->type;
+        if (!TypeUtil::isPrimitive($type)) {
+            $type = TypeUtil::getVarType($property->default);
+        }
+        $stream->write(sprintf('%s $%s', $type, $property->name));
+        if ($property->default) {
+            if (!empty($property->enumerations) && $this->isNonPrimitiveWithDefault($property)) {
+                $stream->write(sprintf(' = %s::VALUE_%s', $property->type, strtoupper($property->default)));
+            } else {
+                $default = is_string($property->default) ? sprintf("'%s'", $property->default) : $property->default;
+                $stream->write(sprintf(' = %s', $property->default));
             }
         }
     }
@@ -274,5 +410,6 @@ class ClassBuilder
         foreach ($lines as $line) {
             $stream->writeLine($line);
         }
+        $stream->write("\n");
     }
 }

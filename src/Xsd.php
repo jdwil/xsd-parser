@@ -92,7 +92,7 @@ class Xsd
 
         foreach ($definition->getElements() as $element) {
             if ($element instanceof ComplexType && $element->getName() === 'CT_Sheet') {
-                $generator = new ClassGenerator($this->options);
+                $generator = new ClassGenerator($this->options, $definition);
                 $generator->generate($element);
             }
         }
