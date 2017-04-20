@@ -91,7 +91,7 @@ class Xsd
 
         $parser = new Parser($definition, $dispatcher);
         $parser->parse($this->document);
-        $factory = new ProcessorFactory($this->options);
+        $factory = new ProcessorFactory($this->options, $definition);
 
         foreach ($definition->getElements() as $element) {
             if ($element instanceof ComplexType && $element->getName() === 'CT_Sheet') {

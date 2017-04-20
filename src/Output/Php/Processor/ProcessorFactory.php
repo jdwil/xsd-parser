@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Output\Php\Processor;
 
+use JDWil\Xsd\DOM\Definition;
 use JDWil\Xsd\Element\AbstractElement;
 use JDWil\Xsd\Options;
 
@@ -18,12 +19,18 @@ final class ProcessorFactory
     private $options;
 
     /**
+     * @var Definition
+     */
+    private $definition;
+
+    /**
      * ProcessorFactory constructor.
      * @param Options $options
      */
-    public function __construct(Options $options)
+    public function __construct(Options $options, Definition $definition)
     {
         $this->options = $options;
+        $this->definition = $definition;
     }
 
     /**
@@ -35,7 +42,7 @@ final class ProcessorFactory
         $className = implode('', array_slice(explode('\\', get_class($element)), -1));
         $fqn = sprintf('JDWil\\Xsd\\Output\\Php\\Processor\\%sProcessor', $className);
         if (class_exists($fqn)) {
-            return new $fqn($element, $this->options);
+            return new $fqn($element, $this->options, $this->definition);
         }
 
         return null;

@@ -2,7 +2,6 @@
 declare(strict_types=1);
 
 namespace JDWil\Xsd\Element;
-use JDWil\Xsd\Facet\Enumeration;
 use JDWil\Xsd\Util\TypeUtil;
 
 /**
@@ -35,14 +34,14 @@ class SimpleType extends IdentifiableElement
      */
     public function canBeMappedToPrimitive()
     {
-        $children = $this->getChildren();
-        if (count($children) === 1) {
-            $child = $children[0];
+        foreach ($this->getChildren() as $child) {
             if ($child instanceof Restriction) {
                 $type = $child->getBase();
                 return TypeUtil::typeToPhpPrimitive($type);
             }
         }
+
+        return null;
     }
 
     /**
@@ -50,9 +49,7 @@ class SimpleType extends IdentifiableElement
      */
     public function isEnum()
     {
-        $children = $this->getChildren();
-        if ($this->hasChildType(Restriction::class, true) && count($children) === 1) {
-            $child = $children[0];
+        foreach ($this->getChildren() as $child) {
             if ($child instanceof Restriction && $child->isEnum()) {
                 return $child->getEnumValues();
             }
@@ -66,6 +63,15 @@ class SimpleType extends IdentifiableElement
      */
     public function getName()
     {
-        return $this->name;
+        if (null !== $this->name) {
+            return $this->name;
+        }
+
+        $parent = $this->getParent();
+        if ($parent instanceof Element) {
+            return $parent->getName();
+        }
+
+        return null;
     }
 }

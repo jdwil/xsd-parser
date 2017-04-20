@@ -19,6 +19,21 @@ class TypeUtil
     }
 
     /**
+     * @param $value
+     * @return string
+     */
+    public static function typeSpecifier($value): string
+    {
+        if (preg_match('/[0-9\.-]+/', $value)) {
+            return strpos($value, '.') !== false ? '%f' : '%d';
+        } else if ((string) $value === 'true' || (string) $value === 'false') {
+            return '%b';
+        } else {
+            return "'%s'";
+        }
+    }
+
+    /**
      * @param $variable
      * @return string
      */

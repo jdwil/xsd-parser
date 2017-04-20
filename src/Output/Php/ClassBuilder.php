@@ -77,23 +77,85 @@ class ClassBuilder
     private $classImplements;
 
     /**
-     * @var array
+     * @var Property[]
      */
     private $properties;
 
     /**
      * @var array
      */
+    private $constants;
+
+    /**
+     * @var Method[]
+     */
     private $methods;
 
     /**
+     * @var bool
+     */
+    private $simpleType;
+
+    /**
+     * @var int
+     */
+    private $minValue;
+
+    /**
+     * @var int
+     */
+    private $maxValue;
+
+    /**
+     * @var int
+     */
+    private $totalDigits;
+
+    /**
+     * @var int
+     */
+    private $fractionDigits;
+
+    /**
+     * @var int
+     */
+    private $valueLength;
+
+    /**
+     * @var int
+     */
+    private $valueMinLength;
+
+    /**
+     * @var int
+     */
+    private $valueMaxLength;
+
+    /**
+     * @var array
+     */
+    private $enumerations;
+
+    /**
+     * @var string
+     */
+    private $whiteSpace;
+
+    /**
+     * @var string
+     */
+    private $valuePattern;
+
+    /**
      * ClassBuilder constructor.
+     * @param Options $options
      */
     public function __construct(Options $options)
     {
         $this->options = $options;
         $this->declarations = [];
         $this->uses = [];
+        $this->constants = [];
         $this->namespace = '';
         $this->docBlock = '';
         $this->classComment = '';
@@ -147,6 +209,16 @@ class ClassBuilder
             throw new ValidationException('modifier can only be FINAL or ABSTRACT');
         }
         $this->classModifiers[] = $modifier;
+        return $this;
+    }
+
+    /**
+     * @param Method $method
+     * @return ClassBuilder
+     */
+    public function addMethod(Method $method): ClassBuilder
+    {
+        $this->methods[] = $method;
         return $this;
     }
 
@@ -215,21 +287,13 @@ class ClassBuilder
     }
 
     /**
-     * @param \stdClass $property
+     * @param Property $property
      * @return ClassBuilder
      */
-    public function addProperty(\stdClass $property): ClassBuilder
+    public function addProperty(Property $property): ClassBuilder
     {
         $this->properties[] = $property;
         return $this;
-    }
-
-    /**
-     * @return PropertyBuilder
-     */
-    public function property(): PropertyBuilder
-    {
-        return new PropertyBuilder();
     }
 
     /**
@@ -238,6 +302,111 @@ class ClassBuilder
     public function getClassName(): string
     {
         return $this->className;
+    }
+
+    /**
+     * @param bool $simpleType
+     */
+    public function setSimpleType(bool $simpleType)
+    {
+        $this->simpleType = $simpleType;
+    }
+
+    /**
+     * @param int $minValue
+     */
+    public function setMinValue(int $minValue)
+    {
+        $this->minValue = $minValue;
+    }
+
+    /**
+     * @param int $maxValue
+     */
+    public function setMaxValue(int $maxValue)
+    {
+        $this->maxValue = $maxValue;
+    }
+
+    /**
+     * @param int $totalDigits
+     */
+    public function setTotalDigits(int $totalDigits)
+    {
+        $this->totalDigits = $totalDigits;
+    }
+
+    /**
+     * @param int $fractionDigits
+     */
+    public function setFractionDigits(int $fractionDigits)
+    {
+        $this->fractionDigits = $fractionDigits;
+    }
+
+    /**
+     * @param int $valueLength
+     */
+    public function setValueLength(int $valueLength)
+    {
+        $this->valueLength = $valueLength;
+    }
+
+    /**
+     * @param int $valueMinLength
+     */
+    public function setValueMinLength(int $valueMinLength)
+    {
+        $this->valueMinLength = $valueMinLength;
+    }
+
+    /**
+     * @param int $valueMaxLength
+     */
+    public function setValueMaxLength(int $valueMaxLength)
+    {
+        $this->valueMaxLength = $valueMaxLength;
+    }
+
+    /**
+     * @param array $enumerations
+     */
+    public function setEnumerations(array $enumerations)
+    {
+        $this->enumerations = $enumerations;
+    }
+
+    /**
+     * @param $enumeration
+     */
+    public function addEnumeration($enumeration)
+    {
+        $this->enumerations[] = $enumeration;
+    }
+
+    /**
+     * @param string $whiteSpace
+     */
+    public function setWhiteSpace(string $whiteSpace)
+    {
+        $this->whiteSpace = $whiteSpace;
+    }
+
+    /**
+     * @param string $valuePattern
+     */
+    public function setValuePattern(string $valuePattern)
+    {
+        $this->valuePattern = $valuePattern;
+    }
+
+    /**
+     * @param string $name
+     * @param $value
+     */
+    public function addConstant(string $name, $value)
+    {
+        $this->constants[$name] = $value;
     }
 
     /**
@@ -273,21 +442,33 @@ class ClassBuilder
                 $stream->write(sprintf('%s ', $modifier));
             }
         }
-        $stream->write(sprintf('%s %s ', $this->classType, $this->className));
+        $stream->write(sprintf('%s %s', $this->classType, $this->className));
 
         if (!empty($this->classExtends)) {
-            $stream->write(sprintf('extends %s ', $this->classExtends));
+            $stream->write(sprintf(' extends %s', $this->classExtends));
         }
 
         if (count($this->classImplements)) {
-            $stream->write(sprintf('%s', $this->classImplements[0]));
+            $stream->write(sprintf(' %s', $this->classImplements[0]));
             for ($iMax = count($this->classImplements), $i = 1; $i < $iMax; $i++) {
-                $stream->write(sprintf('%s, ', $this->classImplements[$i]));
+                $stream->write(sprintf(' %s,', $this->classImplements[$i]));
             }
         }
 
         $stream->write("\n");
         $stream->writeLine('{');
+
+        if (!empty($this->constants)) {
+            foreach ($this->constants as $name => $value) {
+                $specifier = TypeUtil::typeSpecifier($value);
+                if ($this->options->phpVersion === '7.0') {
+                    $stream->writeLine(sprintf("    const %s = {$specifier};", $name, $value));
+                } else {
+                    $stream->writeLine(sprintf("    public const %s = {$specifier};", $name, $value));
+                }
+            }
+            $stream->write("\n");
+        }
 
         if (!empty($this->properties)) {
             foreach ($this->properties as $key => $property) {
@@ -298,11 +479,27 @@ class ClassBuilder
                 $stream->write("\n");
             }
 
+            /**
+             * Constructor doc block
+             */
             $stream->writeLine('    /**');
             $stream->writeLine(sprintf('     * %s constructor', $this->className));
+            foreach ($this->properties as $property) {
+                $stream->writeLine(sprintf('     * @param %s $%s', $property->type, $property->name));
+            }
+            if ($this->hasValidators()) {
+                $stream->writeLine('     * @throws ValidationException');
+            }
             $stream->writeLine('     */');
+
+            /**
+             * Write the constructor
+             */
             $stream->write('    public function __construct(');
 
+            /**
+             * Set class properties within the constructor.
+             */
             $i = 0;
             while (isset($this->properties[$i]) && $this->properties[$i]->fixed) {
                 $i++;
@@ -317,6 +514,7 @@ class ClassBuilder
                     }
                 }
             }
+
             $stream->writeLine(')');
             $stream->writeLine('    {');
             foreach ($this->properties as $property) {
@@ -333,9 +531,21 @@ class ClassBuilder
                     $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
                 }
             }
+
+            /**
+             * Write parameter validations
+             */
+            $this->writeConstructorValidators($stream);
+
+            /**
+             * End of constructor
+             */
             $stream->writeLine('    }');
             $stream->write("\n");
 
+            /**
+             * Getters and Setters
+             */
             foreach ($this->properties as $index => $property) {
                 if ($property->fixed) {
                     continue;
@@ -356,19 +566,21 @@ class ClassBuilder
                 $stream->writeLine('    {');
                 $stream->writeLine(sprintf('        return $this->%s;', $property->name));
                 $stream->writeLine('    }');
-                $stream->write("\n");
 
-                $stream->writeLine('    /**');
-                $stream->writeLine(sprintf('     * @param %s $%s', $property->type, $property->name));
-                $stream->writeLine('     */');
-                $stream->writeLine(sprintf('    public function set%s(%s $%s)',
-                    ucwords($property->name),
-                    $property->type,
-                    $property->name
-                ));
-                $stream->writeLine('    {');
-                $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
-                $stream->writeLine('    }');
+                if (!$property->immutable) {
+                    $stream->write("\n");
+                    $stream->writeLine('    /**');
+                    $stream->writeLine(sprintf('     * @param %s $%s', $property->type, $property->name));
+                    $stream->writeLine('     */');
+                    $stream->writeLine(sprintf('    public function set%s(%s $%s)',
+                        ucwords($property->name),
+                        $property->type,
+                        $property->name
+                    ));
+                    $stream->writeLine('    {');
+                    $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
+                    $stream->writeLine('    }');
+                }
 
                 if (isset($this->properties[$index + 1])) {
                     $stream->write("\n");
@@ -380,19 +592,19 @@ class ClassBuilder
     }
 
     /**
-     * @param \stdClass $property
+     * @param Property $property
      * @return bool
      */
-    private function isNonPrimitiveWithDefault(\stdClass $property)
+    private function isNonPrimitiveWithDefault(Property $property)
     {
         return !TypeUtil::isPrimitive($property->type) && $property->default;
     }
 
     /**
-     * @param \stdClass $property
+     * @param Property $property
      * @param OutputStream $stream
      */
-    private function writeMethodArgument(\stdClass $property, OutputStream $stream)
+    private function writeMethodArgument(Property $property, OutputStream $stream)
     {
         $type = $property->type;
         if (!TypeUtil::isPrimitive($type)) {
@@ -402,6 +614,143 @@ class ClassBuilder
         if ($property->default) {
             $default = is_string($property->default) ? sprintf("'%s'", $property->default) : $property->default;
             $stream->write(sprintf(' = %s', $default));
+        }
+    }
+
+    /**
+     * @return bool
+     */
+    private function hasValidators(): bool
+    {
+        return
+            null !== $this->minValue ||
+            null !== $this->maxValue ||
+            null !== $this->totalDigits ||
+            null !== $this->fractionDigits ||
+            null !== $this->valueLength ||
+            null !== $this->valueMinLength ||
+            null !== $this->valueMaxLength ||
+            null !== $this->valuePattern ||
+            null !== $this->enumerations;
+    }
+
+    /**
+     * @param OutputStream $stream
+     */
+    private function writeConstructorValidators(OutputStream $stream)
+    {
+        if (!$this->simpleType) {
+            return;
+        }
+
+        if (null !== $this->minValue) {
+            $stream->write("\n");
+            $minSpecifier = TypeUtil::typeSpecifier($this->minValue);
+            $stream->writeLine(sprintf("        if (\$this->value < {$minSpecifier}) {", $this->minValue));
+            $stream->writeLine('            throw new ValidationException(\'value out of bounds\');');
+            $stream->writeLine('        }');
+        }
+
+        if (null !== $this->maxValue) {
+            $stream->write("\n");
+            $maxSpecifier = TypeUtil::typeSpecifier($this->maxValue);
+            $stream->writeLine(sprintf("        if (\$this->value > {$maxSpecifier}) {", $this->maxValue));
+            $stream->writeLine('            throw new ValidationException(\'value out of bounds\');');
+            $stream->writeLine('        }');
+        }
+
+        if (null !== $this->totalDigits) {
+            $stream->write("\n");
+            $stream->writeLine(sprintf('        if (%d !== preg_match_all(\'/[0-9]/\', $this->value)) {',
+                $this->totalDigits
+            ));
+            $stream->writeLine(sprintf('            throw new ValidationException(\'value must contain %d digits\'',
+                $this->totalDigits
+            ));
+            $stream->writeLine('        }');
+        }
+
+        if (null !== $this->fractionDigits) {
+            $stream->write("\n");
+            $stream->writeLine(
+                '        $decimals = ((int) $this->value != $this->value) ' .
+                '? (strlen($this->value) - strpos($this->value, \'.\')) - 1 : 0;'
+            );
+            $stream->writeLine(sprintf('        if (%d !== $decimals) {', $this->fractionDigits));
+            $stream->writeLine(sprintf(
+                '            throw new ValidationException(\'value can only contain %d decimal digits\');',
+                $this->fractionDigits
+            ));
+            $stream->writeLine('        }');
+        }
+
+        if (null !== $this->valueLength) {
+            $stream->write("\n");
+            $stream->writeLine(sprintf('        if (%d !== strlen($this->value)) {', $this->valueLength));
+            $stream->writeLine(sprintf('            throw new ValidationException(\'value must be %d characters\');',
+                $this->valueLength
+            ));
+            $stream->writeLine('        }');
+        }
+
+        if (null !== $this->valueMinLength) {
+            $stream->write("\n");
+            $stream->writeLine(sprintf('        if (%d > strlen($this->value)) {', $this->valueMinLength));
+            $stream->writeLine(sprintf(
+                '            throw new ValidationException(\'value must be more than %d characters\');',
+                $this->valueMinLength
+            ));
+            $stream->writeLine('        }');
+        }
+
+        if (null !== $this->valueMaxLength) {
+            $stream->write("\n");
+            $stream->writeLine(sprintf('        if (%d < strlen($this->value)) {', $this->valueMaxLength));
+            $stream->writeLine(sprintf(
+                '            throw new ValidationException(\'value must be less than %d characters\');',
+                $this->valueMaxLength
+            ));
+            $stream->writeLine('        }');
+        }
+
+        if (null !== $this->valuePattern) {
+            $stream->write("\n");
+            $pattern = str_replace(['[0-9]', '/'], ['\\d', '\\/'], $this->valuePattern);
+            $stream->writeLine(sprintf('        if (!preg_match(\'/%s/\', $this->value)) {', $pattern));
+            $stream->writeLine(sprintf(
+                '            throw new ValidationException(\'value does not match pattern "%s"\');',
+                $pattern
+            ));
+            $stream->writeLine('        }');
+        }
+
+        if (null !== $this->enumerations) {
+            $stream->write("\n");
+            $constants = [];
+            foreach ($this->enumerations as $enumeration) {
+                $constants[] = sprintf('self::VALUE_%s', strtoupper($enumeration));
+            }
+            $string = implode(', ', $constants);
+            $wrapped = false;
+            if (strlen($string) >= 90) {
+                $string = str_replace("\n", "\n            ", wordwrap($string, 90));
+                $wrapped = true;
+            }
+            if ($wrapped) {
+                $stream->writeLine('        if (!in_array($this->value, [');
+                $stream->writeLine(sprintf('            %s', $string));
+                $stream->writeLine('        ], true)) {');
+                $stream->writeLine('            throw new ValidationException(\'');
+                $string = str_replace("\n", "\n    ", $string);
+                $stream->writeLine(sprintf('                value must be one of %s', $string));
+                $stream->writeLine('            \');');
+            } else {
+                $stream->writeLine(sprintf('        if (!in_array($this->value, [%s], true)) {', $string));
+                $stream->writeLine(sprintf('            throw new ValidationException(\'value must be one of %s\');',
+                    $string
+                ));
+            }
+            $stream->writeLine('        }');
         }
     }
 

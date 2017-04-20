@@ -122,4 +122,108 @@ class Element extends IdentifiableElement
         $this->final = $final;
         parent::__construct($id);
     }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRef(): string
+    {
+        return $this->ref;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSubstitutionGroup(): string
+    {
+        return $this->substitutionGroup;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDefault(): string
+    {
+        return $this->default;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFixed(): string
+    {
+        return $this->fixed;
+    }
+
+    /**
+     * @return string
+     */
+    public function getForm(): string
+    {
+        return $this->form;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMaxOccurs(): string
+    {
+        return $this->maxOccurs;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMinOccurs(): int
+    {
+        return $this->minOccurs;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNillable(): bool
+    {
+        return $this->nillable;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAbstract(): bool
+    {
+        return $this->abstract;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBlock(): string
+    {
+        return $this->block;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFinal(): string
+    {
+        return $this->final;
+    }
 }
