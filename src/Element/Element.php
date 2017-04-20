@@ -126,7 +126,7 @@ class Element extends IdentifiableElement
     /**
      * @return string
      */
-    public function getName(): string
+    public function getName()
     {
         return $this->name;
     }
@@ -134,7 +134,7 @@ class Element extends IdentifiableElement
     /**
      * @return string
      */
-    public function getRef(): string
+    public function getRef()
     {
         return $this->ref;
     }
@@ -142,7 +142,7 @@ class Element extends IdentifiableElement
     /**
      * @return string
      */
-    public function getType(): string
+    public function getType()
     {
         return $this->type;
     }
@@ -150,7 +150,7 @@ class Element extends IdentifiableElement
     /**
      * @return string
      */
-    public function getSubstitutionGroup(): string
+    public function getSubstitutionGroup()
     {
         return $this->substitutionGroup;
     }
@@ -158,7 +158,7 @@ class Element extends IdentifiableElement
     /**
      * @return string
      */
-    public function getDefault(): string
+    public function getDefault()
     {
         return $this->default;
     }
@@ -166,7 +166,7 @@ class Element extends IdentifiableElement
     /**
      * @return string
      */
-    public function getFixed(): string
+    public function getFixed()
     {
         return $this->fixed;
     }
@@ -174,7 +174,7 @@ class Element extends IdentifiableElement
     /**
      * @return string
      */
-    public function getForm(): string
+    public function getForm()
     {
         return $this->form;
     }
@@ -214,7 +214,7 @@ class Element extends IdentifiableElement
     /**
      * @return string
      */
-    public function getBlock(): string
+    public function getBlock()
     {
         return $this->block;
     }
@@ -222,7 +222,7 @@ class Element extends IdentifiableElement
     /**
      * @return string
      */
-    public function getFinal(): string
+    public function getFinal()
     {
         return $this->final;
     }

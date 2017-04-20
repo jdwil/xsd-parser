@@ -22,9 +22,11 @@ use JDWil\Xsd\Facet\Pattern;
 use JDWil\Xsd\Facet\TotalDigits;
 use JDWil\Xsd\Facet\WhiteSpace;
 use JDWil\Xsd\Options;
+use JDWil\Xsd\Output\Php\Argument;
 use JDWil\Xsd\Output\Php\ClassBuilder;
+use JDWil\Xsd\Output\Php\Method;
 use JDWil\Xsd\Output\Php\Property;
-use JDWil\Xsd\Output\Php\PropertyBuilder;
+use JDWil\Xsd\Util\TypeUtil;
 
 /**
  * Class SimpleTypeProcessor
@@ -66,6 +68,7 @@ final class SimpleTypeProcessor extends AbstractProcessor
         $this->classProperty->immutable = true;
 
         $this->class->setSimpleType(true);
+        $this->class->setNamespace(sprintf('%s\\SimpleType', $this->options->namespacePrefix));
         $this->class->setClassName($this->type->getName());
         $this->initializeClass();
         $this->processClassAttributes();
@@ -162,13 +165,63 @@ final class SimpleTypeProcessor extends AbstractProcessor
         }
     }
 
+    /**
+     * @param XList $list
+     * @throws \Exception
+     */
     protected function processList(XList $list)
     {
+        if ($type = $list->getItemType()) {
+            list($ns, $typeName) = $this->definition->determineNamespace($type, $list);
+            if (!$primitive = TypeUtil::typeToPhpPrimitive($typeName)) {
+                $typeNs = $this->getTypeNamespace($typeName, $ns);
+                $this->class->uses(sprintf('use %s\\%s\\%s', $this->options->namespacePrefix, $typeNs, $typeName));
+            } else {
+                $typeName = $primitive;
+            }
 
+            $property = new Property();
+            $property->name = 'items';
+            $property->type = $typeName;
+            $property->immutable = true;
+            $property->createGetter = false;
+            $property->fixed = true;
+            $this->class->addProperty($property);
+        } else {
+            foreach ($list->getChildren() as $child) {
+                if ($child instanceof SimpleType) {
+                    $type = $child;
+                    break;
+                }
+            }
+            // @todo implement this
+            throw new \Exception('simpleTypes nested in lists are not implemented yet.');
+        }
+
+        $method = new Method();
+        $method->name = 'add';
+        $method->addArgument(new Argument('item', $typeName));
+        $body = <<<_BODY_
+        \$this->items[] = \$item;
+_BODY_;
+        $method->body = $body;
+        $this->class->addMethod($method);
+
+        $method = new Method();
+        $method->name = 'all';
+        $method->returns = 'array';
+        $body = <<<_BODY_
+        return \$this->items;
+_BODY_;
+        $method->body = $body;
+        $this->class->addMethod($method);
     }
 
     protected function processUnion(Union $union)
     {
-
+        /** @var SimpleType $parent */
+        $parent = $union->getParent();
+        $types = $parent->getType();
+        $this->normalizeTypes($types);
     }
 }

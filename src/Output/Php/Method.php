@@ -25,14 +25,24 @@ class Method
     public $static = false;
 
     /**
-     * @var array
+     * @var Argument[]
      */
     public $arguments = [];
 
     /**
+     * @var string[]
+     */
+    public $throws = [];
+
+    /**
      * @var string
      */
-    public $returns;
+    public $returns = false;
+
+    /**
+     * @var bool
+     */
+    public $returnsNull;
 
     /**
      * @var string
@@ -40,11 +50,18 @@ class Method
     public $body;
 
     /**
-     * @param string $name
-     * @param string $type
+     * @param Argument $argument
      */
-    public function addArgument(string $name, string $type)
+    public function addArgument(Argument $argument)
     {
-        $this->arguments[$name] = $type;
+        $this->arguments[] = $argument;
+    }
+
+    /**
+     * @param string $throws
+     */
+    public function throws(string $throws)
+    {
+        $this->throws[] = $throws;
     }
 }

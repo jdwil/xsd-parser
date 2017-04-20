@@ -15,7 +15,7 @@ class TypeUtil
      */
     public static function isPrimitive(string $type): bool
     {
-        return in_array($type, ['bool', 'int', 'float', 'string'], true);
+        return in_array($type, ['bool', 'int', 'float', 'string', '[]'], true);
     }
 
     /**
@@ -24,10 +24,12 @@ class TypeUtil
      */
     public static function typeSpecifier($value): string
     {
-        if (preg_match('/[0-9\.-]+/', $value)) {
-            return strpos($value, '.') !== false ? '%f' : '%d';
+        if (preg_match('/[0-9\.-]+/', (string) $value)) {
+            return strpos((string) $value, '.') !== false ? '%f' : '%d';
         } else if ((string) $value === 'true' || (string) $value === 'false') {
             return '%b';
+        } else if ((string) $value === '[]') {
+            return '%s';
         } else {
             return "'%s'";
         }

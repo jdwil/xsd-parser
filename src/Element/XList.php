@@ -24,4 +24,12 @@ class XList extends IdentifiableElement
         $this->itemType = $itemType;
         parent::__construct($id);
     }
+
+    /**
+     * @return string
+     */
+    public function getItemType()
+    {
+        return $this->itemType;
+    }
 }

@@ -184,7 +184,9 @@ class ClassBuilder
      */
     public function uses(string $use): ClassBuilder
     {
-        $this->uses[] = $use;
+        if (!in_array($use, $this->uses, true)) {
+            $this->uses[] = $use;
+        }
         return $this;
     }
 
@@ -410,10 +412,36 @@ class ClassBuilder
     }
 
     /**
+     * @return string
+     */
+    public function getNamespace(): string
+    {
+        return $this->namespace;
+    }
+
+    /**
+     * @return Method[]
+     */
+    public function getMethods(): array
+    {
+        return $this->methods;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getUses(): array
+    {
+        return $this->uses;
+    }
+
+    /**
      * @param OutputStream $stream
      */
     public function writeTo(OutputStream $stream)
     {
+        $this->sortProperties();
+
         $stream->writeLine('<?php');
         if (count($this->declarations)) {
             $this->writeLines($this->declarations, $stream);
@@ -485,7 +513,13 @@ class ClassBuilder
             $stream->writeLine('    /**');
             $stream->writeLine(sprintf('     * %s constructor', $this->className));
             foreach ($this->properties as $property) {
-                $stream->writeLine(sprintf('     * @param %s $%s', $property->type, $property->name));
+                if (!$property->fixed && $property->includeInConstructor) {
+                    $type = $property->type;
+                    if (!TypeUtil::isPrimitive($type) && null !== $property->default) {
+                        $type = TypeUtil::getVarType($property->default);
+                    }
+                    $stream->writeLine(sprintf('     * @param %s $%s', $type, $property->name));
+                }
             }
             if ($this->hasValidators()) {
                 $stream->writeLine('     * @throws ValidationException');
@@ -501,14 +535,14 @@ class ClassBuilder
              * Set class properties within the constructor.
              */
             $i = 0;
-            while (isset($this->properties[$i]) && $this->properties[$i]->fixed) {
+            while (isset($this->properties[$i]) && ($this->properties[$i]->fixed || !$this->properties[$i]->includeInConstructor)) {
                 $i++;
             }
 
             if (isset($this->properties[$i])) {
                 $this->writeMethodArgument($this->properties[$i], $stream);
                 for ($iMax = count($this->properties), ++$i; $i < $iMax; $i++) {
-                    if (!$this->properties[$i]->fixed) {
+                    if (!$this->properties[$i]->fixed && $this->properties[$i]->includeInConstructor) {
                         $stream->write(', ');
                         $this->writeMethodArgument($this->properties[$i], $stream);
                     }
@@ -517,17 +551,29 @@ class ClassBuilder
 
             $stream->writeLine(')');
             $stream->writeLine('    {');
+
+            /**
+             * Set properties within constructor
+             */
             foreach ($this->properties as $property) {
                 if ($property->fixed) {
-                    $value = is_string($property->default) ? sprintf("'%s'", $property->default) : $property->default;
-                    $stream->writeLine(sprintf('        $this->%s = %s;', $property->name, $value));
+                    if (null !== $property->default && TypeUtil::isPrimitive($property->default)) {
+                        $specifier = TypeUtil::typeSpecifier($property->default);
+                        $value = $property->default;
+                        if (is_array($value)) {
+                            $value = '[]';
+                        }
+                        $stream->writeLine(sprintf("        \$this->%s = {$specifier};", $property->name, $value));
+                    } else {
+                        $stream->writeLine(sprintf('        $this->%s = new %s();', $property->name, $property->default));
+                    }
                 } else if ($this->isNonPrimitiveWithDefault($property)) {
                     $stream->writeLine(sprintf('        $this->%s = new %s($%s);',
                         $property->name,
                         $property->type,
                         $property->name
                     ));
-                } else {
+                } else if ($property->includeInConstructor) {
                     $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
                 }
             }
@@ -541,7 +587,6 @@ class ClassBuilder
              * End of constructor
              */
             $stream->writeLine('    }');
-            $stream->write("\n");
 
             /**
              * Getters and Setters
@@ -551,21 +596,24 @@ class ClassBuilder
                     continue;
                 }
 
-                $stream->writeLine('    /**');
-                $stream->writeLine(sprintf('     * @return %s', $property->type));
-                $stream->writeLine('     */');
-                if ($property->required) {
-                    $stream->writeLine(sprintf('    public function get%s(): %s', ucwords($property->name), $property->type));
-                } else {
-                    if ($this->options->phpVersion === '7.0') {
-                        $stream->writeLine(sprintf('    public function get%s()', ucwords($property->name)));
+                if ($property->createGetter) {
+                    $stream->write("\n");
+                    $stream->writeLine('    /**');
+                    $stream->writeLine(sprintf('     * @return %s', $property->type));
+                    $stream->writeLine('     */');
+                    if ($property->required) {
+                        $stream->writeLine(sprintf('    public function get%s(): %s', ucwords($property->name), $property->type));
                     } else {
-                        $stream->writeLine(sprintf('    public function get%s():? %s', ucwords($property->name), $property->type));
+                        if ($this->options->phpVersion === '7.0') {
+                            $stream->writeLine(sprintf('    public function get%s()', ucwords($property->name)));
+                        } else {
+                            $stream->writeLine(sprintf('    public function get%s():? %s', ucwords($property->name), $property->type));
+                        }
                     }
+                    $stream->writeLine('    {');
+                    $stream->writeLine(sprintf('        return $this->%s;', $property->name));
+                    $stream->writeLine('    }');
                 }
-                $stream->writeLine('    {');
-                $stream->writeLine(sprintf('        return $this->%s;', $property->name));
-                $stream->writeLine('    }');
 
                 if (!$property->immutable) {
                     $stream->write("\n");
@@ -581,10 +629,71 @@ class ClassBuilder
                     $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
                     $stream->writeLine('    }');
                 }
+            }
 
-                if (isset($this->properties[$index + 1])) {
+            /**
+             * Other methods
+             */
+            foreach ($this->methods as $method) {
+                if (count($method->arguments) || $method->returns) {
+                    $stream->write("\n");
+                    $stream->writeLine('    /**');
+                    foreach ($method->arguments as $argument) {
+                        $stream->writeLine(sprintf('     * @param %s $%s', $argument->type, $argument->name));
+                    }
+
+                    if ($method->returns) {
+                        if ($method->returnsNull) {
+                            $stream->writeLine(sprintf('     * @returns null|%s', $method->returns));
+                        } else {
+                            $stream->writeLine(sprintf('     * @returns %s', $method->returns));
+                        }
+                    }
+
+                    if (count($method->throws)) {
+                        foreach ($method->throws as $throws) {
+                            $stream->writeLine(sprintf('     * @throws %s', $throws));
+                        }
+                    }
+                    $stream->writeLine('     */');
+                }
+
+                $stream->write(sprintf('    %s function %s(', $method->visibility, $method->name));
+                if (count($method->arguments)) {
+                    $argument = $method->arguments[0];
+                    $stream->write(sprintf('%s $%s', $argument->type, $argument->name));
+                    if (null !== $argument->default) {
+                        $specification = TypeUtil::typeSpecifier($argument->default);
+                        $stream->write(sprintf(" = {$specification}", $argument->default));
+                    }
+
+                    for ($iMax = count($method->arguments), $i = 1; $i < $iMax; $i++) {
+                        $stream->write(sprintf(', %s $%s', $method->arguments[$i]->type, $method->arguments[$i]->name));
+                        if (null !== $method->arguments[$i]->default) {
+                            $specification = TypeUtil::typeSpecifier($method->arguments[$i]->default);
+                            $stream->write(sprintf(" = {$specification}", $method->arguments[$i]->default));
+                        }
+                    }
+                }
+                $stream->write(')');
+
+                if (false !== $method->returns) {
+                    if ($method->returnsNull) {
+                        if ($this->options->phpVersion === '7.1') {
+                            $stream->writeLine(sprintf(':? %s', $method->returns));
+                        } else {
+                            $stream->write("\n");
+                        }
+                    } else {
+                        $stream->writeLine(sprintf(': %s', $method->returns));
+                    }
+                } else {
                     $stream->write("\n");
                 }
+
+                $stream->writeLine('    {');
+                $stream->writeLine($method->body);
+                $stream->writeLine('    }');
             }
         }
 
@@ -600,6 +709,17 @@ class ClassBuilder
         return !TypeUtil::isPrimitive($property->type) && $property->default;
     }
 
+    private function sortProperties()
+    {
+        usort($this->properties, function ($p1, $p2) {
+            if (null !== $p1->default && null === $p2->default) {
+                return 1;
+            } else {
+                return -1;
+            }
+        });
+    }
+
     /**
      * @param Property $property
      * @param OutputStream $stream
@@ -607,7 +727,7 @@ class ClassBuilder
     private function writeMethodArgument(Property $property, OutputStream $stream)
     {
         $type = $property->type;
-        if (!TypeUtil::isPrimitive($type)) {
+        if (!TypeUtil::isPrimitive($type) && null !== $property->default) {
             $type = TypeUtil::getVarType($property->default);
         }
         $stream->write(sprintf('%s $%s', $type, $property->name));

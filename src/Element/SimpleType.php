@@ -74,4 +74,45 @@ class SimpleType extends IdentifiableElement
 
         return null;
     }
+
+    /**
+     * @return array|null|string
+     */
+    public function getType()
+    {
+        foreach ($this->getChildren() as $child) {
+            if ($child instanceof Restriction) {
+                return $child->getBase();
+            } else if ($child instanceof XList) {
+                if ($type = $child->getItemType()) {
+                    return $type;
+                } else {
+                    foreach ($child->getChildren() as $stChild) {
+                        if ($stChild instanceof SimpleType) {
+                            return $stChild->getType();
+                        }
+                    }
+                }
+            } else if ($child instanceof Union) {
+                $ret = [];
+                if ($memberTypes = $child->getMemberTypes()) {
+                    $ret = explode(' ', $memberTypes);
+                }
+                foreach ($child->getChildren() as $stChild) {
+                    if ($stChild instanceof SimpleType) {
+                        $stRet = $stChild->getType();
+                        if (is_array($stRet)) {
+                            $ret = array_merge($ret, $stRet);
+                        } else {
+                            $ret[] = $stRet;
+                        }
+                    }
+                }
+
+                return $ret;
+            }
+        }
+
+        return null;
+    }
 }

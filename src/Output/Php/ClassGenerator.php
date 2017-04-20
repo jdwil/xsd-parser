@@ -6,6 +6,8 @@ namespace JDWil\Xsd\Output\Php;
 use JDWil\Xsd\DOM\Definition;
 use JDWil\Xsd\Element\Attribute;
 use JDWil\Xsd\Element\ComplexType;
+use JDWil\Xsd\Element\Element;
+use JDWil\Xsd\Element\ElementInterface;
 use JDWil\Xsd\Element\SimpleType;
 use JDWil\Xsd\Exception\FileSystemException;
 use JDWil\Xsd\Options;
@@ -53,19 +55,36 @@ class ClassGenerator
         foreach ($this->definition->getElements() as $element) {
             if ($processor = $this->getProcessor->forElement($element)) {
                 $class = $processor->buildClass();
+
+                $path = $this->options->outputDirectory;
+                if ($element instanceof SimpleType) {
+                    $path = sprintf('%s/SimpleType', $this->options->outputDirectory);
+                    $this->createDirectory($path);
+                } else if ($element instanceof ComplexType) {
+                    $path = sprintf('%s/ComplexType', $this->options->outputDirectory);
+                    $this->createDirectory($path);
+                } else if ($element instanceof Element) {
+                    $path = sprintf('%s/Element', $this->options->outputDirectory);
+                    $this->createDirectory($path);
+                }
+
                 $class->writeTo(OutputStream::streamedTo(
-                    sprintf('%s/%s.php', $this->options->outputDirectory, $class->getClassName())
+                    sprintf('%s/%s.php', $path, $class->getClassName())
                 ));
             }
+        }
+    }
+
+    private function createDirectory(string $path) {
+        if (!@mkdir($path) && !is_dir($path)) {
+            throw new FileSystemException(sprintf('Could not create directory %s', $path));
         }
     }
 
     private function writeExceptions()
     {
         $path = sprintf('%s/Exception', $this->options->outputDirectory);
-        if (!@mkdir($path, 0775) && !is_dir($path)) {
-            throw new FileSystemException(sprintf('Could not create directory %s', $path));
-        }
+        $this->createDirectory($path);
 
         $builder = new ClassBuilder($this->options);
         $builder

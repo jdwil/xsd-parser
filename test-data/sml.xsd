@@ -1,4 +1,5 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://purl.oclc.org/ooxml/spreadsheetml/main" xmlns:s="http://purl.oclc.org/ooxml/officeDocument/sharedTypes" targetNamespace="http://purl.oclc.org/ooxml/spreadsheetml/main" elementFormDefault="qualified">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://purl.oclc.org/ooxml/spreadsheetml/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:s="http://purl.oclc.org/ooxml/officeDocument/sharedTypes" targetNamespace="http://purl.oclc.org/ooxml/spreadsheetml/main" elementFormDefault="qualified">
+  <xsd:import namespace="http://schemas.openxmlformats.org/officeDocument/2006/relationships" schemaLocation="shared-relationshipReference.xsd"/>
   <xsd:import namespace="http://purl.oclc.org/ooxml/officeDocument/sharedTypes" schemaLocation="shared-commonSimpleTypes.xsd"/>
   <xsd:complexType name="CT_Sheets">
     <xsd:sequence>
@@ -18,4 +19,33 @@
       <xsd:enumeration value="veryHidden"/>
     </xsd:restriction>
   </xsd:simpleType>
+  <xsd:element name="workbook" type="CT_Workbook"/>
+  <xsd:complexType name="CT_Workbook">
+    <xsd:sequence>
+      <xsd:element name="fileVersion" type="CT_FileVersion" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="fileSharing" type="CT_FileSharing" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="workbookPr" type="CT_WorkbookPr" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="workbookProtection" type="CT_WorkbookProtection" minOccurs="0"
+                   maxOccurs="1"/>
+      <xsd:element name="bookViews" type="CT_BookViews" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="sheets" type="CT_Sheets" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="functionGroups" type="CT_FunctionGroups" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="externalReferences" type="CT_ExternalReferences" minOccurs="0"
+                   maxOccurs="1"/>
+      <xsd:element name="definedNames" type="CT_DefinedNames" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="calcPr" type="CT_CalcPr" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="oleSize" type="CT_OleSize" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="customWorkbookViews" type="CT_CustomWorkbookViews" minOccurs="0"
+                   maxOccurs="1"/>
+      <xsd:element name="pivotCaches" type="CT_PivotCaches" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="smartTagPr" type="CT_SmartTagPr" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="smartTagTypes" type="CT_SmartTagTypes" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="webPublishing" type="CT_WebPublishing" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="fileRecoveryPr" type="CT_FileRecoveryPr" minOccurs="0"
+                   maxOccurs="unbounded"/>
+      <xsd:element name="webPublishObjects" type="CT_WebPublishObjects" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="extLst" type="CT_ExtensionList" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+    <xsd:attribute name="conformance" type="s:ST_ConformanceClass"/>
+  </xsd:complexType>
 </xsd:schema>

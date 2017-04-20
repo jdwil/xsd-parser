@@ -24,4 +24,12 @@ class Union extends IdentifiableElement
         $this->memberTypes = $memberTypes;
         parent::__construct($id);
     }
+
+    /**
+     * @return string
+     */
+    public function getMemberTypes()
+    {
+        return $this->memberTypes;
+    }
 }

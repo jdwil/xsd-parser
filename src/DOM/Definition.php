@@ -101,4 +101,41 @@ class Definition
 
         return null;
     }
+
+    /**
+     * @param string $name
+     * @param AbstractElement $element
+     * @return null|array
+     */
+    public function determineNamespace(string $name, AbstractElement $element)
+    {
+        if (strpos($name, ':') === false) {
+            return [$element->getSchema()->getXmlns(), $name];
+        }
+
+        list($namespace, $name) = explode(':', $name);
+        $namespaces = $element->getSchema()->getNamespaces();
+        if (isset($namespaces[$namespace])) {
+            return [$namespaces[$namespace], $name];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param string $alias
+     * @return null
+     */
+    public function getNamespaceFromAlias(string $alias)
+    {
+        foreach ($this->getSchemas() as $schema) {
+            foreach ($schema->getNamespaces() as $a => $namespace) {
+                if ($a === $alias) {
+                    return $namespace;
+                }
+            }
+        }
+
+        return null;
+    }
 }

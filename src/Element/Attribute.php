@@ -11,6 +11,10 @@ use JDWil\Xsd\Exception\ValidationException;
  */
 class Attribute extends IdentifiableElement
 {
+    const USE_REQUIRED = 'required';
+    const USE_OPTIONAL = 'optional';
+    const USE_PROHIBITED = 'prohibited';
+
     /**
      * @var string
      */
