@@ -45,7 +45,7 @@ class ComplexTypeProcessor extends AbstractProcessor
         parent::__construct($options, $definition);
     }
 
-    public function buildClass(): ClassBuilder
+    public function buildClass()
     {
         $this->class->setNamespace(sprintf('%s\\ComplexType', $this->options->namespacePrefix));
         $this->class->setClassName($this->type->getName());
@@ -188,7 +188,7 @@ _BODY_;
             $attribute = $this->definition->findElementByName($name, $namespace);
         }
 
-        if ($attribute->getUse() === Attribute::USE_PROHIBITED) {
+        if (!$attribute || $attribute->getUse() === Attribute::USE_PROHIBITED) {
             return;
         }
 

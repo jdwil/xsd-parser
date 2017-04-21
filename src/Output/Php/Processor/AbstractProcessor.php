@@ -14,6 +14,7 @@ use JDWil\Xsd\Output\Php\ClassBuilder;
 use JDWil\Xsd\Output\Php\Method;
 use JDWil\Xsd\Output\Php\Property;
 use JDWil\Xsd\Stream\OutputStream;
+use JDWil\Xsd\ValueObject\Enum;
 
 abstract class AbstractProcessor implements ProcessorInterface
 {
@@ -160,14 +161,15 @@ _BODY_;
      */
     protected function normalizeTypes(array $types): array
     {
+        $type = $classNs = $ns = '';
         $ret = [];
-        foreach ($types as $type) {
-            list($ns, $name) = $this->normalizeType($type);
-            if (null !== $ns) {
-                $ret[$ns] = $name;
-            } else {
+        foreach ($types as $name) {
+            if ($name instanceof Enum) {
                 $ret[] = $name;
+                continue;
             }
+            $this->analyzeType($name, $type, $classNs, $ns);
+            $ret[$type] = $classNs;
         }
 
         return $ret;

@@ -11,5 +11,5 @@ use JDWil\Xsd\Output\Php\ClassBuilder;
  */
 interface ProcessorInterface
 {
-    public function buildClass(): ClassBuilder;
+    public function buildClass();
 }

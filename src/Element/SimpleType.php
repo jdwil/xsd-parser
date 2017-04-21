@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Element;
 use JDWil\Xsd\Util\TypeUtil;
+use JDWil\Xsd\ValueObject\Enum;
 
 /**
  * Class SimpleType
@@ -82,15 +83,18 @@ class SimpleType extends IdentifiableElement
     {
         foreach ($this->getChildren() as $child) {
             if ($child instanceof Restriction) {
+                if ($child->isEnum()) {
+                    return $child->getEnumValues();
+                }
                 return $child->getBase();
             } else if ($child instanceof XList) {
                 if ($type = $child->getItemType()) {
                     return $type;
-                } else {
-                    foreach ($child->getChildren() as $stChild) {
-                        if ($stChild instanceof SimpleType) {
-                            return $stChild->getType();
-                        }
+                }
+
+                foreach ($child->getChildren() as $stChild) {
+                    if ($stChild instanceof SimpleType) {
+                        return $stChild->getType();
                     }
                 }
             } else if ($child instanceof Union) {

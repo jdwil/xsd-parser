@@ -23,6 +23,11 @@ class Property
     public $type;
 
     /**
+     * @var string
+     */
+    public $visibility = 'protected';
+
+    /**
      * @var mixed
      */
     public $default;
@@ -65,7 +70,8 @@ class Property
     {
         $type = $attribute->getType();
         if (strpos($type, ':') !== false) {
-            $name = array_pop(explode(':', $type));
+            $pieces = explode(':', $type);
+            $name = array_pop($pieces);
             if ($primitive = TypeUtil::typeToPhpPrimitive($name)) {
                 $type = $primitive;
             } else {

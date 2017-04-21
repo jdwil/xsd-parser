@@ -5,6 +5,7 @@ namespace JDWil\Xsd\Element;
 
 use JDWil\Xsd\Facet\Enumeration;
 use JDWil\Xsd\Facet\FacetInterface;
+use JDWil\Xsd\ValueObject\Enum;
 
 /**
  * Class Restriction
@@ -49,7 +50,7 @@ class Restriction extends IdentifiableElement
     }
 
     /**
-     * @return array|bool
+     * @return Enum|bool
      */
     public function getEnumValues()
     {
@@ -57,9 +58,9 @@ class Restriction extends IdentifiableElement
             return false;
         }
 
-        $ret = [];
+        $ret = new Enum();
         foreach ($this->getFacets() as $facet) {
-            $ret[] = $facet->getValue();
+            $ret->add($facet->getValue());
         }
 
         return $ret;

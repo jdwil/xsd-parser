@@ -59,7 +59,7 @@ final class SimpleTypeProcessor extends AbstractProcessor
     /**
      * @return ClassBuilder
      */
-    public function buildClass(): ClassBuilder
+    public function buildClass()
     {
         $this->classProperty = new Property();
         $this->classProperty->name = 'value';
@@ -217,11 +217,50 @@ _BODY_;
         $this->class->addMethod($method);
     }
 
+    /**
+     * @param Union $union
+     */
     protected function processUnion(Union $union)
     {
         /** @var SimpleType $parent */
         $parent = $union->getParent();
         $types = $parent->getType();
-        $this->normalizeTypes($types);
+        if (!is_array($types)) {
+            $types = [$types];
+        }
+        $types = $this->normalizeTypes($types);
+        $statements = [];
+        $namespaces = [];
+        foreach ($types as $type => $ns) {
+            if ($primitive = TypeUtil::typeToPhpPrimitive($type)) {
+                switch ($primitive) {
+                    case 'int':
+                        $statements[] = "!preg_match(/'\\d+'/, \$value)";
+                        break;
+                    case 'bool':
+                        $statements[] = "!preg_match('/true|false|0|1/', \$value)";
+                        break;
+                    case 'float':
+                        $statements[] = "!preg_match('/-?\\d*\\.\\d+/', \$value)";
+                        break;
+                }
+            } else {
+                $statements[] = sprintf('!$value instanceof %s', $type);
+                $namespaces[] = sprintf('%s\\%s\\%s', $this->options->namespacePrefix, $ns, $type);
+            }
+        }
+
+        $this->classProperty->type = null;
+        $this->class->uses(sprintf('use %s\\Exception\\ValidationException;', $this->options->namespacePrefix));
+        foreach ($namespaces as $namespace) {
+            $this->class->uses(sprintf('use %s;', $namespace));
+        }
+        $conditions = implode(' && ', $statements);
+        $validator = <<<_VALIDATOR_
+        if ($conditions) {
+            throw new ValidationException('value is not valid for union.');
+        }
+_VALIDATOR_;
+        $this->class->addValidator($validator);
     }
 }

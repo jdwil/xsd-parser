@@ -147,6 +147,11 @@ class ClassBuilder
     private $valuePattern;
 
     /**
+     * @var array
+     */
+    private $validators;
+
+    /**
      * ClassBuilder constructor.
      * @param Options $options
      */
@@ -166,6 +171,7 @@ class ClassBuilder
         $this->classImplements = [];
         $this->properties = [];
         $this->methods = [];
+        $this->validators = [];
     }
 
     /**
@@ -175,6 +181,16 @@ class ClassBuilder
     public function addDeclaration(string $declaration): ClassBuilder
     {
         $this->declarations[] = $declaration;
+        return $this;
+    }
+
+    /**
+     * @param string $validator
+     * @return ClassBuilder
+     */
+    public function addValidator(string $validator): ClassBuilder
+    {
+        $this->validators[] = $validator;
         return $this;
     }
 
@@ -503,7 +519,7 @@ class ClassBuilder
                 $stream->writeLine('    /**');
                 $stream->writeLine(sprintf('     * @var %s', $property->type));
                 $stream->writeLine('     */');
-                $stream->writeLine(sprintf('    private $%s;', $property->name));
+                $stream->writeLine(sprintf('    %s $%s;', $property->visibility, $property->name));
                 $stream->write("\n");
             }
 
@@ -515,10 +531,15 @@ class ClassBuilder
             foreach ($this->properties as $property) {
                 if (!$property->fixed && $property->includeInConstructor) {
                     $type = $property->type;
-                    if (!TypeUtil::isPrimitive($type) && null !== $property->default) {
+                    if ($type && null !== $property->default && !TypeUtil::isPrimitive($type)) {
                         $type = TypeUtil::getVarType($property->default);
                     }
-                    $stream->writeLine(sprintf('     * @param %s $%s', $type, $property->name));
+                    if ($type) {
+                        $stream->writeLine(sprintf('     * @param %s $%s', $type, $property->name));
+                    } else {
+                        $stream->writeLine(sprintf('     * @param mixed $%s', $property->name));
+                    }
+
                 }
             }
             if ($this->hasValidators()) {
@@ -584,6 +605,13 @@ class ClassBuilder
             $this->writeConstructorValidators($stream);
 
             /**
+             * Custom validators
+             */
+            foreach ($this->validators as $validator) {
+                $stream->writeLine($validator);
+            }
+
+            /**
              * End of constructor
              */
             $stream->writeLine('    }');
@@ -599,12 +627,12 @@ class ClassBuilder
                 if ($property->createGetter) {
                     $stream->write("\n");
                     $stream->writeLine('    /**');
-                    $stream->writeLine(sprintf('     * @return %s', $property->type));
+                    $stream->writeLine(sprintf('     * @return %s', $property->type ?? 'mixed'));
                     $stream->writeLine('     */');
-                    if ($property->required) {
+                    if ($property->required && $property->type) {
                         $stream->writeLine(sprintf('    public function get%s(): %s', ucwords($property->name), $property->type));
                     } else {
-                        if ($this->options->phpVersion === '7.0') {
+                        if ($this->options->phpVersion === '7.0' || !$property->type) {
                             $stream->writeLine(sprintf('    public function get%s()', ucwords($property->name)));
                         } else {
                             $stream->writeLine(sprintf('    public function get%s():? %s', ucwords($property->name), $property->type));
@@ -706,7 +734,7 @@ class ClassBuilder
      */
     private function isNonPrimitiveWithDefault(Property $property)
     {
-        return !TypeUtil::isPrimitive($property->type) && $property->default;
+        return $property->type && !TypeUtil::isPrimitive($property->type) && $property->default;
     }
 
     private function sortProperties()
@@ -727,10 +755,14 @@ class ClassBuilder
     private function writeMethodArgument(Property $property, OutputStream $stream)
     {
         $type = $property->type;
-        if (!TypeUtil::isPrimitive($type) && null !== $property->default) {
+        if ($type && null !== $property->default && !TypeUtil::isPrimitive($type)) {
             $type = TypeUtil::getVarType($property->default);
         }
-        $stream->write(sprintf('%s $%s', $type, $property->name));
+        if ($type) {
+            $stream->write(sprintf('%s $%s', $type, $property->name));
+        } else {
+            $stream->write(sprintf('$%s', $property->name));
+        }
         if ($property->default) {
             $default = is_string($property->default) ? sprintf("'%s'", $property->default) : $property->default;
             $stream->write(sprintf(' = %s', $default));
@@ -751,7 +783,8 @@ class ClassBuilder
             null !== $this->valueMinLength ||
             null !== $this->valueMaxLength ||
             null !== $this->valuePattern ||
-            null !== $this->enumerations;
+            null !== $this->enumerations ||
+            count($this->validators) > 0;
     }
 
     /**

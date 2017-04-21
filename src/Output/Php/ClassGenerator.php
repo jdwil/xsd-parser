@@ -54,7 +54,9 @@ class ClassGenerator
         $this->writeExceptions();
         foreach ($this->definition->getElements() as $element) {
             if ($processor = $this->getProcessor->forElement($element)) {
-                $class = $processor->buildClass();
+                if (!$class = $processor->buildClass()) {
+                    continue;
+                }
 
                 $path = $this->options->outputDirectory;
                 if ($element instanceof SimpleType) {
