@@ -25,6 +25,11 @@ class Property
     /**
      * @var string
      */
+    public $namespace;
+
+    /**
+     * @var string
+     */
     public $visibility = 'protected';
 
     /**
@@ -61,6 +66,16 @@ class Property
      * @var bool
      */
     public $includeInConstructor = true;
+
+    /**
+     * @var string
+     */
+    public $choiceGroup;
+
+    /**
+     * @var bool
+     */
+    public $isCollection = false;
 
     /**
      * @param Attribute $attribute

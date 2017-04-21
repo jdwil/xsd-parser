@@ -1,6 +1,169 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://purl.oclc.org/ooxml/spreadsheetml/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:s="http://purl.oclc.org/ooxml/officeDocument/sharedTypes" targetNamespace="http://purl.oclc.org/ooxml/spreadsheetml/main" elementFormDefault="qualified">
   <xsd:import namespace="http://schemas.openxmlformats.org/officeDocument/2006/relationships" schemaLocation="shared-relationshipReference.xsd"/>
   <xsd:import namespace="http://purl.oclc.org/ooxml/officeDocument/sharedTypes" schemaLocation="shared-commonSimpleTypes.xsd"/>
+  <xsd:complexType name="CT_FilterColumn">
+    <xsd:choice minOccurs="0" maxOccurs="1">
+      <xsd:element name="filters" type="CT_Filters" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="top10" type="CT_Top10" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="customFilters" type="CT_CustomFilters" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="dynamicFilter" type="CT_DynamicFilter" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="colorFilter" type="CT_ColorFilter" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="iconFilter" minOccurs="0" maxOccurs="1" type="CT_IconFilter"/>
+      <xsd:element name="extLst" type="CT_ExtensionList" minOccurs="0" maxOccurs="1"/>
+    </xsd:choice>
+    <xsd:attribute name="colId" type="xsd:unsignedInt" use="required"/>
+    <xsd:attribute name="hiddenButton" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="showButton" type="xsd:boolean" use="optional" default="true"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_Filters">
+    <xsd:sequence>
+      <xsd:element name="filter" type="CT_Filter" minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="dateGroupItem" type="CT_DateGroupItem" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="blank" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="calendarType" type="s:ST_CalendarType" use="optional" default="none"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_Filter">
+    <xsd:attribute name="val" type="s:ST_Xstring"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_CustomFilters">
+    <xsd:sequence>
+      <xsd:element name="customFilter" type="CT_CustomFilter" minOccurs="1" maxOccurs="2"/>
+    </xsd:sequence>
+    <xsd:attribute name="and" type="xsd:boolean" use="optional" default="false"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_CustomFilter">
+    <xsd:attribute name="operator" type="ST_FilterOperator" default="equal" use="optional"/>
+    <xsd:attribute name="val" type="s:ST_Xstring"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_Top10">
+    <xsd:attribute name="top" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="percent" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="val" type="xsd:double" use="required"/>
+    <xsd:attribute name="filterVal" type="xsd:double" use="optional"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_ColorFilter">
+    <xsd:attribute name="dxfId" type="ST_DxfId" use="optional"/>
+    <xsd:attribute name="cellColor" type="xsd:boolean" use="optional" default="true"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_IconFilter">
+    <xsd:attribute name="iconSet" type="ST_IconSetType" use="required"/>
+    <xsd:attribute name="iconId" type="xsd:unsignedInt" use="optional"/>
+  </xsd:complexType>
+  <xsd:simpleType name="ST_FilterOperator">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="equal"/>
+      <xsd:enumeration value="lessThan"/>
+      <xsd:enumeration value="lessThanOrEqual"/>
+      <xsd:enumeration value="notEqual"/>
+      <xsd:enumeration value="greaterThanOrEqual"/>
+      <xsd:enumeration value="greaterThan"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name="CT_DynamicFilter">
+    <xsd:attribute name="type" type="ST_DynamicFilterType" use="required"/>
+    <xsd:attribute name="val" type="xsd:double" use="optional"/>
+    <xsd:attribute name="valIso" type="xsd:dateTime" use="optional"/>
+    <xsd:attribute name="maxValIso" type="xsd:dateTime" use="optional"/>
+  </xsd:complexType>
+  <xsd:simpleType name="ST_DynamicFilterType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="null"/>
+      <xsd:enumeration value="aboveAverage"/>
+      <xsd:enumeration value="belowAverage"/>
+      <xsd:enumeration value="tomorrow"/>
+      <xsd:enumeration value="today"/>
+      <xsd:enumeration value="yesterday"/>
+      <xsd:enumeration value="nextWeek"/>
+      <xsd:enumeration value="thisWeek"/>
+      <xsd:enumeration value="lastWeek"/>
+      <xsd:enumeration value="nextMonth"/>
+      <xsd:enumeration value="thisMonth"/>
+      <xsd:enumeration value="lastMonth"/>
+      <xsd:enumeration value="nextQuarter"/>
+      <xsd:enumeration value="thisQuarter"/>
+      <xsd:enumeration value="lastQuarter"/>
+      <xsd:enumeration value="nextYear"/>
+      <xsd:enumeration value="thisYear"/>
+      <xsd:enumeration value="lastYear"/>
+      <xsd:enumeration value="yearToDate"/>
+      <xsd:enumeration value="Q1"/>
+      <xsd:enumeration value="Q2"/>
+      <xsd:enumeration value="Q3"/>
+      <xsd:enumeration value="Q4"/>
+      <xsd:enumeration value="M1"/>
+      <xsd:enumeration value="M2"/>
+      <xsd:enumeration value="M3"/>
+      <xsd:enumeration value="M4"/>
+      <xsd:enumeration value="M5"/>
+      <xsd:enumeration value="M6"/>
+      <xsd:enumeration value="M7"/>
+      <xsd:enumeration value="M8"/>
+      <xsd:enumeration value="M9"/>
+      <xsd:enumeration value="M10"/>
+      <xsd:enumeration value="M11"/>
+      <xsd:enumeration value="M12"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:simpleType name="ST_IconSetType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="3Arrows"/>
+      <xsd:enumeration value="3ArrowsGray"/>
+      <xsd:enumeration value="3Flags"/>
+      <xsd:enumeration value="3TrafficLights1"/>
+      <xsd:enumeration value="3TrafficLights2"/>
+      <xsd:enumeration value="3Signs"/>
+      <xsd:enumeration value="3Symbols"/>
+      <xsd:enumeration value="3Symbols2"/>
+      <xsd:enumeration value="4Arrows"/>
+      <xsd:enumeration value="4ArrowsGray"/>
+      <xsd:enumeration value="4RedToBlack"/>
+      <xsd:enumeration value="4Rating"/>
+      <xsd:enumeration value="4TrafficLights"/>
+      <xsd:enumeration value="5Arrows"/>
+      <xsd:enumeration value="5ArrowsGray"/>
+      <xsd:enumeration value="5Rating"/>
+      <xsd:enumeration value="5Quarters"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name="CT_DateGroupItem">
+    <xsd:attribute name="year" type="xsd:unsignedShort" use="required"/>
+    <xsd:attribute name="month" type="xsd:unsignedShort" use="optional"/>
+    <xsd:attribute name="day" type="xsd:unsignedShort" use="optional"/>
+    <xsd:attribute name="hour" type="xsd:unsignedShort" use="optional"/>
+    <xsd:attribute name="minute" type="xsd:unsignedShort" use="optional"/>
+    <xsd:attribute name="second" type="xsd:unsignedShort" use="optional"/>
+    <xsd:attribute name="dateTimeGrouping" type="ST_DateTimeGrouping" use="required"/>
+  </xsd:complexType>
+  <xsd:simpleType name="ST_DateTimeGrouping">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="year"/>
+      <xsd:enumeration value="month"/>
+      <xsd:enumeration value="day"/>
+      <xsd:enumeration value="hour"/>
+      <xsd:enumeration value="minute"/>
+      <xsd:enumeration value="second"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:simpleType name="ST_DxfId">
+    <xsd:restriction base="xsd:unsignedInt"/>
+  </xsd:simpleType>
+  <xsd:group name="EG_ExtensionList">
+    <xsd:sequence>
+      <xsd:element name="ext" type="CT_Extension" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:group>
+  <xsd:complexType name="CT_Extension">
+    <xsd:sequence>
+      <xsd:any processContents="lax"/>
+    </xsd:sequence>
+    <xsd:attribute name="uri" type="xsd:token"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_ExtensionList">
+    <xsd:sequence>
+      <xsd:group ref="EG_ExtensionList" minOccurs="0"/>
+    </xsd:sequence>
+  </xsd:complexType>
   <xsd:complexType name="CT_Sheets">
     <xsd:sequence>
       <xsd:element name="sheet" type="CT_Sheet" minOccurs="1" maxOccurs="unbounded"/>

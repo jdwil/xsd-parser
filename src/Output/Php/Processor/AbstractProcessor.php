@@ -199,4 +199,37 @@ _BODY_;
         $classNamespace = $this->getTypeNamespace($name, $namespace);
         $type = $name;
     }
+
+    /**
+     * @param string $ref
+     * @param AbstractElement $element
+     * @return AbstractElement
+     */
+    protected function resolveReference(string $ref, AbstractElement $element): AbstractElement
+    {
+        list($namespace, $name) = $this->definition->determineNamespace($ref, $element);
+        return $this->definition->findElementByName($name, $namespace);
+    }
+
+    /**
+     * @param string $classNs
+     * @param string|null $className
+     * @return string
+     */
+    protected function classNamespace(string $classNs, string $className = null): string
+    {
+        if ($className) {
+            return sprintf('%s\\%s\\%s', $this->options->namespacePrefix, $classNs, $className);
+        } else {
+            return sprintf('%s\\%s', $this->options->namespacePrefix, $classNs);
+        }
+    }
+
+    /**
+     *
+     */
+    protected function usesValidationException()
+    {
+        $this->class->uses(sprintf('use %s\\Exception\\ValidationException;', $this->options->namespacePrefix));
+    }
 }

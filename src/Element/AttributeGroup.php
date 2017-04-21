@@ -38,4 +38,20 @@ class AttributeGroup extends IdentifiableElement
         $this->ref = $ref;
         parent::__construct($id);
     }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRef()
+    {
+        return $this->ref;
+    }
 }

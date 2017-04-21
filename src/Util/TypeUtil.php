@@ -27,7 +27,7 @@ class TypeUtil
         if (preg_match('/[0-9\.-]+/', (string) $value)) {
             return strpos((string) $value, '.') !== false ? '%f' : '%d';
         } else if ((string) $value === 'true' || (string) $value === 'false') {
-            return '%b';
+            return '%s';
         } else if ((string) $value === '[]') {
             return '%s';
         } else {

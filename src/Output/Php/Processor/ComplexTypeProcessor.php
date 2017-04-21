@@ -114,8 +114,31 @@ class ComplexTypeProcessor extends AbstractProcessor
 
     private function processChoice(Choice $choice)
     {
-        // @todo implement this
-        throw new \Exception('choice within complexType is not supported yet.');
+        if (!$choiceGroup = $choice->getId()) {
+            $choiceGroup = md5(uniqid('', true));
+        }
+
+        foreach ($choice->getChildren() as $child) {
+            if ($child instanceof Element) {
+                if ($ref = $child->getRef()) {
+                    $element = $this->resolveReference($ref, $child);
+                }
+                $this->usesValidationException();
+
+                $property = new Property();
+                $property->name = $child->getName();
+                $property->min = $child->getMinOccurs();
+                $property->max = $child->getMaxOccurs();
+
+                $type = $classNs = $ns = '';
+                $this->analyzeType($child->getType(), $type, $classNs, $ns);
+                $property->type = $type;
+                $property->namespace = $this->classNamespace($classNs, $type);
+                $property->choiceGroup = $choiceGroup;
+
+                $this->class->addProperty($property);
+            }
+        }
     }
 
     private function processSequence(Sequence $sequence)
@@ -205,8 +228,24 @@ _BODY_;
 
     private function processAttributeGroup(AttributeGroup $attributeGroup)
     {
-        // @todo implement this
-        throw new \Exception('attributeGroup within complexType is not supported yet.');
+        if ($ref = $attributeGroup->getRef()) {
+            list($ns, $name) = $this->definition->determineNamespace($ref, $attributeGroup);
+            $attributeGroup = $this->definition->findElementByName($name, $ns);
+        }
+
+        foreach ($attributeGroup->getChildren() as $child) {
+            if ($child instanceof Attribute) {
+                $this->processAttribute($child);
+            } else if ($child instanceof AttributeGroup) {
+                $this->processAttributeGroup($child);
+            } else if ($child instanceof AnyAttribute) {
+                // @todo implement this
+                throw new \Exception('anyAttribute is not yet supported.');
+            } else if ($child instanceof Annotation) {
+                // @todo implement this
+                throw new \Exception('annotation is not yet supported.');
+            }
+        }
     }
 
     private function processAnyAttribute(AnyAttribute $anyAttribute)
