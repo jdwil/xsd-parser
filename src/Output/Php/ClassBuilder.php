@@ -515,217 +515,317 @@ class ClassBuilder
         }
 
         if (!empty($this->properties)) {
-            foreach ($this->properties as $key => $property) {
-                $stream->writeLine('    /**');
-                $stream->writeLine(sprintf('     * @var %s', $property->type));
-                $stream->writeLine('     */');
-                $stream->writeLine(sprintf('    %s $%s;', $property->visibility, $property->name));
-                $stream->write("\n");
-            }
-
-            /**
-             * Constructor doc block
-             */
-            $stream->writeLine('    /**');
-            $stream->writeLine(sprintf('     * %s constructor', $this->className));
-            foreach ($this->properties as $property) {
-                if (!$property->fixed && $property->includeInConstructor) {
-                    $type = $property->type;
-                    if ($type && null !== $property->default && !TypeUtil::isPrimitive($type)) {
-                        $type = TypeUtil::getVarType($property->default);
-                    }
-                    if ($type) {
-                        $stream->writeLine(sprintf('     * @param %s $%s', $type, $property->name));
-                    } else {
-                        $stream->writeLine(sprintf('     * @param mixed $%s', $property->name));
-                    }
-
-                }
-            }
-            if ($this->hasValidators()) {
-                $stream->writeLine('     * @throws ValidationException');
-            }
-            $stream->writeLine('     */');
-
-            /**
-             * Write the constructor
-             */
-            $stream->write('    public function __construct(');
-
-            /**
-             * Set class properties within the constructor.
-             */
-            $i = 0;
-            while (isset($this->properties[$i]) && ($this->properties[$i]->fixed || !$this->properties[$i]->includeInConstructor)) {
-                $i++;
-            }
-
-            if (isset($this->properties[$i])) {
-                $this->writeMethodArgument($this->properties[$i], $stream);
-                for ($iMax = count($this->properties), ++$i; $i < $iMax; $i++) {
-                    if (!$this->properties[$i]->fixed && $this->properties[$i]->includeInConstructor) {
-                        $stream->write(', ');
-                        $this->writeMethodArgument($this->properties[$i], $stream);
-                    }
-                }
-            }
-
-            $stream->writeLine(')');
-            $stream->writeLine('    {');
-
-            /**
-             * Set properties within constructor
-             */
-            foreach ($this->properties as $property) {
-                if ($property->fixed) {
-                    if (null !== $property->default && TypeUtil::isPrimitive($property->default)) {
-                        $specifier = TypeUtil::typeSpecifier($property->default);
-                        $value = $property->default;
-                        if (is_array($value)) {
-                            $value = '[]';
-                        }
-                        $stream->writeLine(sprintf("        \$this->%s = {$specifier};", $property->name, $value));
-                    } else {
-                        $stream->writeLine(sprintf('        $this->%s = new %s();', $property->name, $property->default));
-                    }
-                } else if ($this->isNonPrimitiveWithDefault($property)) {
-                    $stream->writeLine(sprintf('        $this->%s = new %s($%s);',
-                        $property->name,
-                        $property->type,
-                        $property->name
-                    ));
-                } else if ($property->includeInConstructor) {
-                    $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
-                }
-            }
-
-            /**
-             * Write parameter validations
-             */
-            $this->writeConstructorValidators($stream);
-
-            /**
-             * Custom validators
-             */
-            foreach ($this->validators as $validator) {
-                $stream->writeLine($validator);
-            }
-
-            /**
-             * End of constructor
-             */
-            $stream->writeLine('    }');
-
-            /**
-             * Getters and Setters
-             */
-            foreach ($this->properties as $index => $property) {
-                if ($property->fixed) {
-                    continue;
-                }
-
-                if ($property->createGetter) {
-                    $stream->write("\n");
-                    $stream->writeLine('    /**');
-                    $stream->writeLine(sprintf('     * @return %s', $property->type ?? 'mixed'));
-                    $stream->writeLine('     */');
-                    if ($property->required && $property->type) {
-                        $stream->writeLine(sprintf('    public function get%s(): %s', ucwords($property->name), $property->type));
-                    } else {
-                        if ($this->options->phpVersion === '7.0' || !$property->type) {
-                            $stream->writeLine(sprintf('    public function get%s()', ucwords($property->name)));
-                        } else {
-                            $stream->writeLine(sprintf('    public function get%s():? %s', ucwords($property->name), $property->type));
-                        }
-                    }
-                    $stream->writeLine('    {');
-                    $stream->writeLine(sprintf('        return $this->%s;', $property->name));
-                    $stream->writeLine('    }');
-                }
-
-                if (!$property->immutable) {
-                    $stream->write("\n");
-                    $stream->writeLine('    /**');
-                    $stream->writeLine(sprintf('     * @param %s $%s', $property->type, $property->name));
-                    $stream->writeLine('     */');
-                    $stream->writeLine(sprintf('    public function set%s(%s $%s)',
-                        ucwords($property->name),
-                        $property->type,
-                        $property->name
-                    ));
-                    $stream->writeLine('    {');
-                    $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
-                    $stream->writeLine('    }');
-                }
-            }
-
-            /**
-             * Other methods
-             */
-            foreach ($this->methods as $method) {
-                if (count($method->arguments) || $method->returns) {
-                    $stream->write("\n");
-                    $stream->writeLine('    /**');
-                    foreach ($method->arguments as $argument) {
-                        $stream->writeLine(sprintf('     * @param %s $%s', $argument->type, $argument->name));
-                    }
-
-                    if ($method->returns) {
-                        if ($method->returnsNull) {
-                            $stream->writeLine(sprintf('     * @returns null|%s', $method->returns));
-                        } else {
-                            $stream->writeLine(sprintf('     * @returns %s', $method->returns));
-                        }
-                    }
-
-                    if (count($method->throws)) {
-                        foreach ($method->throws as $throws) {
-                            $stream->writeLine(sprintf('     * @throws %s', $throws));
-                        }
-                    }
-                    $stream->writeLine('     */');
-                }
-
-                $stream->write(sprintf('    %s function %s(', $method->visibility, $method->name));
-                if (count($method->arguments)) {
-                    $argument = $method->arguments[0];
-                    $stream->write(sprintf('%s $%s', $argument->type, $argument->name));
-                    if (null !== $argument->default) {
-                        $specification = TypeUtil::typeSpecifier($argument->default);
-                        $stream->write(sprintf(" = {$specification}", $argument->default));
-                    }
-
-                    for ($iMax = count($method->arguments), $i = 1; $i < $iMax; $i++) {
-                        $stream->write(sprintf(', %s $%s', $method->arguments[$i]->type, $method->arguments[$i]->name));
-                        if (null !== $method->arguments[$i]->default) {
-                            $specification = TypeUtil::typeSpecifier($method->arguments[$i]->default);
-                            $stream->write(sprintf(" = {$specification}", $method->arguments[$i]->default));
-                        }
-                    }
-                }
-                $stream->write(')');
-
-                if (false !== $method->returns) {
-                    if ($method->returnsNull) {
-                        if ($this->options->phpVersion === '7.1') {
-                            $stream->writeLine(sprintf(':? %s', $method->returns));
-                        } else {
-                            $stream->write("\n");
-                        }
-                    } else {
-                        $stream->writeLine(sprintf(': %s', $method->returns));
-                    }
-                } else {
-                    $stream->write("\n");
-                }
-
-                $stream->writeLine('    {');
-                $stream->writeLine($method->body);
-                $stream->writeLine('    }');
-            }
+            $this->writeProperties($stream);
+            $this->writeConstructorDocBlock($stream);
+            $this->writeConstructor($stream);
+            $this->writeGettersAndSetters($stream);
+            $this->writeOtherMethods($stream);
         }
 
         $stream->writeLine('}');
+    }
+
+    /**
+     * @param OutputStream $stream
+     */
+    private function writeProperties(OutputStream $stream)
+    {
+        foreach ($this->properties as $key => $property) {
+            $stream->writeLine('    /**');
+            $stream->writeLine(sprintf('     * @var %s', $property->type));
+            $stream->writeLine('     */');
+            $stream->writeLine(sprintf('    %s $%s;', $property->visibility, $property->name));
+            $stream->write("\n");
+        }
+    }
+
+    /**
+     * @param OutputStream $stream
+     */
+    private function writeConstructorDocBlock(OutputStream $stream)
+    {
+        $stream->writeLine('    /**');
+        $stream->writeLine(sprintf('     * %s constructor', $this->className));
+        foreach ($this->properties as $property) {
+            if ($this->includeInConstructor($property)) {
+                $type = $property->type;
+                if ($type && null !== $property->default && !TypeUtil::isPrimitive($type)) {
+                    $type = TypeUtil::getVarType($property->default);
+                }
+                if ($type) {
+                    $stream->writeLine(sprintf('     * @param %s $%s', $type, $property->name));
+                } else {
+                    $stream->writeLine(sprintf('     * @param mixed $%s', $property->name));
+                }
+            }
+        }
+        if ($this->hasValidators()) {
+            $stream->writeLine('     * @throws ValidationException');
+        }
+        $stream->writeLine('     */');
+    }
+
+    /**
+     * @param OutputStream $stream
+     */
+    private function writeConstructor(OutputStream $stream)
+    {
+        /**
+         * Write the constructor
+         */
+        $stream->write('    public function __construct(');
+
+        /**
+         * Set class properties within the constructor.
+         */
+        $i = 0;
+        while (isset($this->properties[$i]) && !$this->includeInConstructor($this->properties[$i])) {
+            $i++;
+        }
+
+        if (isset($this->properties[$i])) {
+            $this->writeMethodArgument($this->properties[$i], $stream);
+            for ($iMax = count($this->properties), ++$i; $i < $iMax; $i++) {
+                if ($this->includeInConstructor($this->properties[$i])) {
+                    $stream->write(', ');
+                    $this->writeMethodArgument($this->properties[$i], $stream);
+                }
+            }
+        }
+
+        $stream->writeLine(')');
+        $stream->writeLine('    {');
+
+        /**
+         * Set properties within constructor
+         */
+        foreach ($this->properties as $property) {
+            if ($property->fixed) {
+                if (null !== $property->default && TypeUtil::isPrimitive($property->default)) {
+                    $specifier = TypeUtil::typeSpecifier($property->default);
+                    $value = $property->default;
+                    if (is_array($value)) {
+                        $value = '[]';
+                    }
+                    $stream->writeLine(sprintf("        \$this->%s = {$specifier};", $property->name, $value));
+                } else {
+                    $stream->writeLine(sprintf('        $this->%s = new %s();', $property->name, $property->default));
+                }
+            } else if ($this->isNonPrimitiveWithDefault($property)) {
+                $stream->writeLine(sprintf('        $this->%s = new %s($%s);',
+                    $property->name,
+                    $property->type,
+                    $property->name
+                ));
+            } else if ($this->includeInConstructor($property)) {
+                $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
+            }
+        }
+
+        /**
+         * Write parameter validations
+         */
+        $this->writeConstructorValidators($stream);
+
+        /**
+         * Custom validators
+         */
+        foreach ($this->validators as $validator) {
+            $stream->writeLine($validator);
+        }
+
+        /**
+         * End of constructor
+         */
+        $stream->writeLine('    }');
+    }
+
+    /**
+     * @param OutputStream $stream
+     */
+    private function writeGettersAndSetters(OutputStream $stream)
+    {
+        /**
+         * Getters and Setters
+         */
+        foreach ($this->properties as $index => $property) {
+            if ($property->fixed) {
+                continue;
+            }
+
+            if ($property->createGetter) {
+                $stream->write("\n");
+                $stream->writeLine('    /**');
+                $stream->writeLine(sprintf('     * @return %s', $property->type ?? 'mixed'));
+                $stream->writeLine('     */');
+                if ($property->required && $property->type) {
+                    $stream->writeLine(sprintf('    public function get%s(): %s', ucwords($property->name), $property->type));
+                } else {
+                    if ($this->options->phpVersion === '7.0' || !$property->type) {
+                        $stream->writeLine(sprintf('    public function get%s()', ucwords($property->name)));
+                    } else {
+                        $stream->writeLine(sprintf('    public function get%s():? %s', ucwords($property->name), $property->type));
+                    }
+                }
+                $stream->writeLine('    {');
+                $stream->writeLine(sprintf('        return $this->%s;', $property->name));
+                $stream->writeLine('    }');
+            }
+
+            if ($this->needsSetter($property)) {
+                $stream->write("\n");
+                $stream->writeLine('    /**');
+                $stream->writeLine(sprintf('     * @param %s $%s', $property->type, $property->name));
+                if ($property->choiceGroup) {
+                    $stream->writeLine('     * @throws ValidationException');
+                }
+                $stream->writeLine('     */');
+                $stream->writeLine(sprintf('    public function set%s(%s $%s)',
+                    ucwords($property->name),
+                    $property->type,
+                    $property->name
+                ));
+                $stream->writeLine('    {');
+                if ($property->choiceGroup) {
+                    $statements = [];
+                    $names = [];
+                    foreach ($this->getPropertiesInGroup($property) as $otherProperty) {
+                        $names[] = sprintf('$%s', $otherProperty->name);
+                        if ($property->name === $otherProperty->name) {
+                            continue;
+                        }
+                        $statements[] = sprintf('null !== $this->%s', $otherProperty->name);
+                    }
+                    $if = implode(' || ', $statements);
+                    $stream->writeLine(sprintf('        if (%s) {', $if));
+                    $stream->writeLine(sprintf(
+                        '            throw new ValidationException(\'only one of %s allowed in group\');',
+                        implode(', ', $names)
+                    ));
+                    $stream->writeLine('        }');
+                }
+                $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
+                $stream->writeLine('    }');
+            }
+        }
+    }
+
+    /**
+     * @param OutputStream $stream
+     */
+    private function writeOtherMethods(OutputStream $stream)
+    {
+        /**
+         * Other methods
+         */
+        foreach ($this->methods as $method) {
+            if (count($method->arguments) || $method->returns) {
+                $stream->write("\n");
+                $stream->writeLine('    /**');
+                foreach ($method->arguments as $argument) {
+                    $stream->writeLine(sprintf('     * @param %s $%s', $argument->type, $argument->name));
+                }
+
+                if ($method->returns) {
+                    if ($method->returnsNull) {
+                        $stream->writeLine(sprintf('     * @returns null|%s', $method->returns));
+                    } else {
+                        $stream->writeLine(sprintf('     * @returns %s', $method->returns));
+                    }
+                }
+
+                if (count($method->throws)) {
+                    foreach ($method->throws as $throws) {
+                        $stream->writeLine(sprintf('     * @throws %s', $throws));
+                    }
+                }
+                $stream->writeLine('     */');
+            }
+
+            $stream->write(sprintf('    %s function %s(', $method->visibility, $method->name));
+            if (count($method->arguments)) {
+                $argument = $method->arguments[0];
+                $stream->write(sprintf('%s $%s', $argument->type, $argument->name));
+                if (null !== $argument->default) {
+                    $specification = TypeUtil::typeSpecifier($argument->default);
+                    $stream->write(sprintf(" = {$specification}", $argument->default));
+                }
+
+                for ($iMax = count($method->arguments), $i = 1; $i < $iMax; $i++) {
+                    $stream->write(sprintf(', %s $%s', $method->arguments[$i]->type, $method->arguments[$i]->name));
+                    if (null !== $method->arguments[$i]->default) {
+                        $specification = TypeUtil::typeSpecifier($method->arguments[$i]->default);
+                        $stream->write(sprintf(" = {$specification}", $method->arguments[$i]->default));
+                    }
+                }
+            }
+            $stream->write(')');
+
+            if (false !== $method->returns) {
+                if ($method->returnsNull) {
+                    if ($this->options->phpVersion === '7.1') {
+                        $stream->writeLine(sprintf(':? %s', $method->returns));
+                    } else {
+                        $stream->write("\n");
+                    }
+                } else {
+                    $stream->writeLine(sprintf(': %s', $method->returns));
+                }
+            } else {
+                $stream->write("\n");
+            }
+
+            $stream->writeLine('    {');
+            $stream->writeLine($method->body);
+            $stream->writeLine('    }');
+        }
+    }
+
+    /**
+     * @param Property $property
+     * @return bool
+     */
+    private function needsSetter(Property $property): bool
+    {
+        return (!$property->immutable && !$property->isCollection);
+    }
+
+    /**
+     * @param Property $property
+     * @return Property[]
+     */
+    private function getPropertiesInGroup(Property $property): array
+    {
+        $ret = [];
+        $groupId = $property->choiceGroup;
+        foreach ($this->properties as $otherProperty) {
+            if ($otherProperty->choiceGroup === $groupId) {
+                $ret[] = $otherProperty;
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
+     * @param Property $property
+     * @return bool
+     */
+    private function includeInConstructor(Property $property): bool
+    {
+        if (!$property->includeInConstructor) {
+            return false;
+        }
+
+        if ($property->fixed) {
+            return false;
+        }
+
+        if (null !== $property->choiceGroup) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -764,8 +864,8 @@ class ClassBuilder
             $stream->write(sprintf('$%s', $property->name));
         }
         if ($property->default) {
-            $default = is_string($property->default) ? sprintf("'%s'", $property->default) : $property->default;
-            $stream->write(sprintf(' = %s', $default));
+            $specifier = TypeUtil::typeSpecifier($property->default);
+            $stream->write(sprintf(" = {$specifier}", $property->default));
         }
     }
 
