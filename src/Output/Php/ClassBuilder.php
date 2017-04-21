@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Output\Php;
 
+use Doctrine\Common\Inflector\Inflector;
 use JDWil\Xsd\Exception\ValidationException;
 use JDWil\Xsd\Options;
 use JDWil\Xsd\Stream\OutputStream;
@@ -14,6 +15,8 @@ use JDWil\Xsd\Util\TypeUtil;
  */
 class ClassBuilder
 {
+    const DEFAULT_COLLECTION_NAME = 'items';
+
     const FINAL = 'final';
     const ABSTRACT = 'abstract';
 
@@ -653,61 +656,145 @@ class ClassBuilder
                 continue;
             }
 
-            if ($property->createGetter) {
-                $stream->write("\n");
-                $stream->writeLine('    /**');
-                $stream->writeLine(sprintf('     * @return %s', $property->type ?? 'mixed'));
-                $stream->writeLine('     */');
-                if ($property->required && $property->type) {
-                    $stream->writeLine(sprintf('    public function get%s(): %s', ucwords($property->name), $property->type));
-                } else {
-                    if ($this->options->phpVersion === '7.0' || !$property->type) {
-                        $stream->writeLine(sprintf('    public function get%s()', ucwords($property->name)));
-                    } else {
-                        $stream->writeLine(sprintf('    public function get%s():? %s', ucwords($property->name), $property->type));
-                    }
-                }
-                $stream->writeLine('    {');
-                $stream->writeLine(sprintf('        return $this->%s;', $property->name));
-                $stream->writeLine('    }');
+            if ($this->needsGetter($property)) {
+                $this->writeGetter($property, $stream);
+            }
+
+            if ($this->needsAller($property)) {
+                $this->writeAller($property, $stream);
             }
 
             if ($this->needsSetter($property)) {
-                $stream->write("\n");
-                $stream->writeLine('    /**');
-                $stream->writeLine(sprintf('     * @param %s $%s', $property->type, $property->name));
-                if ($property->choiceGroup) {
-                    $stream->writeLine('     * @throws ValidationException');
-                }
-                $stream->writeLine('     */');
-                $stream->writeLine(sprintf('    public function set%s(%s $%s)',
-                    ucwords($property->name),
-                    $property->type,
-                    $property->name
-                ));
-                $stream->writeLine('    {');
-                if ($property->choiceGroup) {
-                    $statements = [];
-                    $names = [];
-                    foreach ($this->getPropertiesInGroup($property) as $otherProperty) {
-                        $names[] = sprintf('$%s', $otherProperty->name);
-                        if ($property->name === $otherProperty->name) {
-                            continue;
-                        }
-                        $statements[] = sprintf('null !== $this->%s', $otherProperty->name);
-                    }
-                    $if = implode(' || ', $statements);
-                    $stream->writeLine(sprintf('        if (%s) {', $if));
-                    $stream->writeLine(sprintf(
-                        '            throw new ValidationException(\'only one of %s allowed in group\');',
-                        implode(', ', $names)
-                    ));
-                    $stream->writeLine('        }');
-                }
-                $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
-                $stream->writeLine('    }');
+                $this->writeSetter($property, $stream);
+            }
+
+            if ($this->needsAdder($property)) {
+                $this->writeAdder($property, $stream);
             }
         }
+    }
+
+    /**
+     * @param Property $property
+     * @param OutputStream $stream
+     */
+    private function writeGetter(Property $property, OutputStream $stream)
+    {
+        $stream->write("\n");
+        $stream->writeLine('    /**');
+        $stream->writeLine(sprintf('     * @return %s', $property->type ?? 'mixed'));
+        $stream->writeLine('     */');
+        if ($property->required && $property->type) {
+            $stream->writeLine(sprintf('    public function get%s(): %s', ucwords($property->name), $property->type));
+        } else {
+            if ($this->options->phpVersion === '7.0' || !$property->type) {
+                $stream->writeLine(sprintf('    public function get%s()', ucwords($property->name)));
+            } else {
+                $stream->writeLine(sprintf('    public function get%s():? %s', ucwords($property->name), $property->type));
+            }
+        }
+        $stream->writeLine('    {');
+        $stream->writeLine(sprintf('        return $this->%s;', $property->name));
+        $stream->writeLine('    }');
+    }
+
+    /**
+     * @param Property $property
+     * @param OutputStream $stream
+     */
+    private function writeSetter(Property $property, OutputStream $stream)
+    {
+        $stream->write("\n");
+        $stream->writeLine('    /**');
+        $stream->writeLine(sprintf('     * @param %s $%s', $property->type, $property->name));
+        if ($property->choiceGroup) {
+            $stream->writeLine('     * @throws ValidationException');
+        }
+        $stream->writeLine('     */');
+        $stream->writeLine(sprintf('    public function set%s(%s $%s)',
+            ucwords($property->name),
+            $property->type,
+            $property->name
+        ));
+        $stream->writeLine('    {');
+        if ($property->choiceGroup) {
+            $statements = [];
+            $names = [];
+            foreach ($this->getPropertiesInGroup($property) as $otherProperty) {
+                $names[] = sprintf('$%s', $otherProperty->name);
+                if ($property->name === $otherProperty->name) {
+                    continue;
+                }
+                $statements[] = sprintf('null !== $this->%s', $otherProperty->name);
+            }
+            $if = implode(' || ', $statements);
+            $stream->writeLine(sprintf('        if (%s) {', $if));
+            $stream->writeLine(sprintf(
+                '            throw new ValidationException(\'only one of %s allowed in group\');',
+                implode(', ', $names)
+            ));
+            $stream->writeLine('        }');
+        }
+        $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
+        $stream->writeLine('    }');
+    }
+
+    /**
+     * @param Property $property
+     * @param OutputStream $stream
+     */
+    private function writeAller(Property $property, OutputStream $stream)
+    {
+        $stream->write("\n");
+        $methodName = 'all';
+        if ($property->name !== self::DEFAULT_COLLECTION_NAME) {
+            $methodName = sprintf('all%s', Inflector::pluralize(Inflector::classify($property->name)));
+        }
+
+        $stream->writeLine('    /**');
+        $stream->writeLine('     * @returns array');
+        if ($property->collectionMin !== 0) {
+            $stream->writeLine('     * @throws ValidationException');
+        }
+        $stream->writeLine('     */');
+        $stream->writeLine(sprintf('    public function %s(): array', $methodName));
+        $stream->writeLine('    {');
+        $target = $methodName === 'all' ? 'items' : sprintf('%s->all()', $property->name);
+        if ($property->collectionMin !== 0) {
+            $stream->writeLine(sprintf('        $ret = $this->%s;', $target));
+            $stream->writeLine(sprintf('        if (%d < $ret) {', $property->collectionMin));
+            $stream->writeLine(sprintf(
+                '            throw new ValidationException(\'collection must have at least %d members\');',
+                $property->collectionMin
+            ));
+            $stream->writeLine('        }');
+            $stream->write("\n");
+            $stream->writeLine('        return $ret;');
+        } else {
+            $stream->writeLine(sprintf('        return $this->%s;', $target));
+        }
+        $stream->writeLine('    }');
+    }
+
+    private function writeAdder(Property $property, OutputStream $stream)
+    {
+        $stream->write("\n");
+        $methodName = 'add';
+        if ($property->name !== self::DEFAULT_COLLECTION_NAME) {
+            $methodName = sprintf('add%s', Inflector::classify($property->name));
+        }
+
+        $stream->writeLine('    /**');
+        $stream->writeLine(sprintf('     * @param %s $%s', $property->type, $property->name));
+        $stream->writeLine('     */');
+        $stream->writeLine(sprintf('    public function %s(%s $%s)', $methodName, $property->type, $property->name));
+        $stream->writeLine('    {');
+        if ($methodName === 'add') {
+            $stream->writeLine(sprintf('        $this->items->add($%s);', $property->name));
+        } else {
+            $stream->writeLine(sprintf('        $this->%s->add($%s);', $property->name, $property->name));
+        }
+        $stream->writeLine('    }');
     }
 
     /**
@@ -788,6 +875,33 @@ class ClassBuilder
     private function needsSetter(Property $property): bool
     {
         return (!$property->immutable && !$property->isCollection);
+    }
+
+    /**
+     * @param Property $property
+     * @return bool
+     */
+    private function needsGetter(Property $property): bool
+    {
+        return !$property->isCollection && $property->createGetter;
+    }
+
+    /**
+     * @param Property $property
+     * @return bool
+     */
+    private function needsAdder(Property $property): bool
+    {
+        return !$property->immutable && $property->isCollection;
+    }
+
+    /**
+     * @param Property $property
+     * @return bool
+     */
+    private function needsAller(Property $property): bool
+    {
+        return $property->isCollection;
     }
 
     /**

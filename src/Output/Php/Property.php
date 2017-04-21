@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace JDWil\Xsd\Output\Php;
 
 use JDWil\Xsd\Element\Attribute;
+use JDWil\Xsd\Element\Element;
 use JDWil\Xsd\Util\TypeUtil;
 
 /**
@@ -78,6 +79,16 @@ class Property
     public $isCollection = false;
 
     /**
+     * @var int
+     */
+    public $collectionMin = 0;
+
+    /**
+     * @var string
+     */
+    public $collectionMax = '1';
+
+    /**
      * @param Attribute $attribute
      * @return Property
      */
@@ -99,6 +110,39 @@ class Property
         $ret->name = $attribute->getName();
         $ret->type = $type;
         $ret->default = $attribute->getDefault();
+
+        return $ret;
+    }
+
+    /**
+     * @param Element $element
+     * @param string|null $type
+     * @param string|null $namespace
+     * @param string|null $choiceGroup
+     * @return Property
+     */
+    public static function fromElement(
+        Element $element,
+        string $type = null,
+        string $namespace = null,
+        string $choiceGroup = null
+    ) {
+        $ret = new Property();
+        $ret->name = $element->getName();
+        $ret->collectionMin = $element->getMinOccurs();
+        $ret->collectionMax = $element->getMaxOccurs();
+        $ret->type = null === $type ? $element->getType() : $type;
+        if (null !== $namespace) {
+            $ret->namespace = $namespace;
+        }
+
+        if (null !== $choiceGroup) {
+            $ret->choiceGroup = $choiceGroup;
+        }
+
+        if ($ret->collectionMin > 1 || (int) $ret->collectionMax > 1 || $ret->collectionMax === 'unbounded') {
+            $ret->isCollection = true;
+        }
 
         return $ret;
     }

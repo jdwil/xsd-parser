@@ -120,21 +120,15 @@ class ComplexTypeProcessor extends AbstractProcessor
 
         foreach ($choice->getChildren() as $child) {
             if ($child instanceof Element) {
+                $element = $child;
                 if ($ref = $child->getRef()) {
                     $element = $this->resolveReference($ref, $child);
                 }
                 $this->usesValidationException();
 
-                $property = new Property();
-                $property->name = $child->getName();
-                $property->min = $child->getMinOccurs();
-                $property->max = $child->getMaxOccurs();
-
                 $type = $classNs = $ns = '';
-                $this->analyzeType($child->getType(), $type, $classNs, $ns);
-                $property->type = $type;
-                $property->namespace = $this->classNamespace($classNs, $type);
-                $property->choiceGroup = $choiceGroup;
+                $this->analyzeType($element->getType(), $type, $classNs, $ns);
+                $property = Property::fromElement($element, $type, $classNs, $choiceGroup);
 
                 $this->class->addProperty($property);
             }
