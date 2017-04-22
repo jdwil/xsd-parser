@@ -8,7 +8,9 @@ use JDWil\Xsd\DOM\Definition;
 use JDWil\Xsd\Element\Element;
 use JDWil\Xsd\Element\Schema;
 use JDWil\Xsd\Options;
+use JDWil\Xsd\Output\Php\Argument;
 use JDWil\Xsd\Output\Php\ClassBuilder;
+use JDWil\Xsd\Output\Php\Method;
 
 /**
  * Class ElementProcessor
@@ -20,6 +22,11 @@ class ElementProcessor extends AbstractProcessor
      * @var Element
      */
     private $type;
+
+    /**
+     * @var string
+     */
+    private $tagName;
 
     /**
      * SimpleTypeProcessor constructor.
@@ -42,6 +49,7 @@ class ElementProcessor extends AbstractProcessor
         $this->initializeClass();
         $this->processClassAttributes();
         $this->class->setNamespace(sprintf('%s\\Element', $this->options->namespacePrefix));
+        $this->createWriteXML();
 
         return $this->class;
     }
@@ -56,10 +64,21 @@ class ElementProcessor extends AbstractProcessor
         }
 
         $this->class->setClassName(Inflector::classify($element->getName()));
+        $this->tagName = $element->getName();
         if ($type = $element->getType()) {
             $ns = $this->getTypeNamespace($type);
             $this->class->setClassExtends($type);
             $this->class->uses(sprintf('use %s\\%s\\%s;', $this->options->namespacePrefix, $ns, $type));
         }
+    }
+
+    protected function createWriteXML()
+    {
+        $this->usesOutputStream();
+        $method = new Method();
+        $method->name = 'writeXMLTo';
+        $method->addArgument(new Argument('stream', 'OutputStream'));
+        $method->body = sprintf('        parent::writeXML($stream, \'%s\');', $this->tagName);
+        $this->class->addMethod($method);
     }
 }

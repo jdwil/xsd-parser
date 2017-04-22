@@ -8,25 +8,26 @@ use JDWil\Xsd\Exception\ValidationException;
 class AnyURI extends AbstractStringType
 {
     /**
+     * AnyURI constructor.
+     * @param string $value
+     * @throws ValidationException
+     */
+    public function __construct(string $value)
+    {
+        if (!$this->isValidURI($value)) {
+            $this->throwNotValid();
+        }
+
+        $this->value = $value;
+    }
+
+    /**
      * @return string
      * @throws ValidationException
      */
     public function __toString(): string
     {
-        if (!$this->isValidURI($this->value)) {
-            throw new ValidationException('value must be a valid URI');
-        }
-
         return $this->value;
-    }
-
-    public function setValue(string $value)
-    {
-        if (!$this->isValidURI($value)) {
-            throw new ValidationException('value must be a valid URI');
-        }
-
-        $this->value = $value;
     }
 
     /**
@@ -36,5 +37,13 @@ class AnyURI extends AbstractStringType
     private function isValidURI(string $uri): bool
     {
         return filter_var($uri, FILTER_VALIDATE_URL) !== false;
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function throwNotValid()
+    {
+        throw new ValidationException('value must be a valid URI');
     }
 }

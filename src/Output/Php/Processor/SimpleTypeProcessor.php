@@ -198,6 +198,7 @@ final class SimpleTypeProcessor extends AbstractProcessor
             throw new \Exception('simpleTypes nested in lists are not implemented yet.');
         }
 
+        // @todo let the ClassBuilder do this.
         $method = new Method();
         $method->name = 'add';
         $method->addArgument(new Argument('item', $typeName));

@@ -11,15 +11,6 @@ abstract class AbstractStringType implements StringTypeInterface
     protected $value;
 
     /**
-     * AbstractStringType constructor.
-     * @param string $value
-     */
-    public function __construct(string $value)
-    {
-        $this->value = $value;
-    }
-
-    /**
      * @return string
      */
     public function getValue(): string

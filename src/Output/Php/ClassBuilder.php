@@ -183,7 +183,9 @@ class ClassBuilder
      */
     public function addDeclaration(string $declaration): ClassBuilder
     {
-        $this->declarations[] = $declaration;
+        if (!in_array($declaration, $this->declarations, true)) {
+            $this->declarations[] = $declaration;
+        }
         return $this;
     }
 
@@ -455,6 +457,14 @@ class ClassBuilder
     }
 
     /**
+     * @return Property[]
+     */
+    public function getProperties(): array
+    {
+        return $this->properties;
+    }
+
+    /**
      * @param OutputStream $stream
      */
     public function writeTo(OutputStream $stream)
@@ -522,8 +532,8 @@ class ClassBuilder
             $this->writeConstructorDocBlock($stream);
             $this->writeConstructor($stream);
             $this->writeGettersAndSetters($stream);
-            $this->writeOtherMethods($stream);
         }
+        $this->writeOtherMethods($stream);
 
         $stream->writeLine('}');
     }
@@ -776,23 +786,28 @@ class ClassBuilder
         $stream->writeLine('    }');
     }
 
+    /**
+     * @param Property $property
+     * @param OutputStream $stream
+     */
     private function writeAdder(Property $property, OutputStream $stream)
     {
         $stream->write("\n");
         $methodName = 'add';
         if ($property->name !== self::DEFAULT_COLLECTION_NAME) {
-            $methodName = sprintf('add%s', Inflector::classify($property->name));
+            $methodName = sprintf('add%s', Inflector::classify(Inflector::singularize($property->name)));
         }
 
+        $variable = Inflector::singularize($property->name);
         $stream->writeLine('    /**');
-        $stream->writeLine(sprintf('     * @param %s $%s', $property->type, $property->name));
+        $stream->writeLine(sprintf('     * @param %s $%s', $property->collectionOf, $variable));
         $stream->writeLine('     */');
-        $stream->writeLine(sprintf('    public function %s(%s $%s)', $methodName, $property->type, $property->name));
+        $stream->writeLine(sprintf('    public function %s(%s $%s)', $methodName, $property->collectionOf, $variable));
         $stream->writeLine('    {');
         if ($methodName === 'add') {
-            $stream->writeLine(sprintf('        $this->items->add($%s);', $property->name));
+            $stream->writeLine(sprintf('        $this->items->add($%s);', $variable));
         } else {
-            $stream->writeLine(sprintf('        $this->%s->add($%s);', $property->name, $property->name));
+            $stream->writeLine(sprintf('        $this->%s->add($%s);', $property->name, $variable));
         }
         $stream->writeLine('    }');
     }
@@ -939,6 +954,10 @@ class ClassBuilder
             return false;
         }
 
+        if (!$property->required && !$property->default) {
+            return false;
+        }
+
         return true;
     }
 
@@ -971,6 +990,9 @@ class ClassBuilder
         $type = $property->type;
         if ($type && null !== $property->default && !TypeUtil::isPrimitive($type)) {
             $type = TypeUtil::getVarType($property->default);
+            if ($property->name === 'dpi') {
+                echo $property->default . "\n";
+            }
         }
         if ($type) {
             $stream->write(sprintf('%s $%s', $type, $property->name));
@@ -978,7 +1000,11 @@ class ClassBuilder
             $stream->write(sprintf('$%s', $property->name));
         }
         if ($property->default) {
-            $specifier = TypeUtil::typeSpecifier($property->default);
+            if (TypeUtil::isPrimitive($type)) {
+                $specifier = TypeUtil::typeSpecifier($type);
+            } else {
+                $specifier = TypeUtil::typeSpecifier($property->default);
+            }
             $stream->write(sprintf(" = {$specifier}", $property->default));
         }
     }

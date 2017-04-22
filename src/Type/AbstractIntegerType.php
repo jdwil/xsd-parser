@@ -11,15 +11,6 @@ abstract class AbstractIntegerType implements IntegerTypeInterface
     protected $value;
 
     /**
-     * AbstractIntegerType constructor.
-     * @param int $value
-     */
-    public function __construct(int $value)
-    {
-        $this->value = $value;
-    }
-
-    /**
      * @return int
      */
     public function getValue(): int

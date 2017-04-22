@@ -13,6 +13,7 @@ class Duration
     /**
      * Duration constructor.
      * @param string $value
+     * @throws \Exception
      */
     public function __construct(string $value)
     {
@@ -25,14 +26,6 @@ class Duration
     public function __toString()
     {
         return $this->value->format('P%yY%mM%dDT%hH%iM%sS');
-    }
-
-    /**
-     * @param \DateInterval $value
-     */
-    public function setValue(\DateInterval $value)
-    {
-        $this->value = $value;
     }
 
     /**

@@ -24,4 +24,12 @@ class Extension extends IdentifiableElement
         $this->base = $base;
         parent::__construct($id);
     }
+
+    /**
+     * @return string
+     */
+    public function getBase(): string
+    {
+        return $this->base;
+    }
 }

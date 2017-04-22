@@ -21,11 +21,6 @@ interface StringTypeInterface
     public function __toString(): string;
 
     /**
-     * @param string $value
-     */
-    public function setValue(string $value);
-
-    /**
      * @return string
      */
     public function getValue(): string;

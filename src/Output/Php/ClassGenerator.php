@@ -51,12 +51,24 @@ class ClassGenerator
 
     public function generate()
     {
+        $streamDir = sprintf('%s/Stream', $this->options->outputDirectory);
+        $this->createDirectory($streamDir);
+        $sourceDir = __DIR__ . '/../../Stream';
+        $fileTarget = sprintf('%s/OutputStream.php', $sourceDir);
+        $source = file_get_contents($fileTarget);
+        $newNamespace = sprintf('namespace %s\\Stream;', $this->options->namespacePrefix);
+        $source = preg_replace('/^namespace [^;]+;/m', $newNamespace, $source);
+        $stream = OutputStream::streamedTo(sprintf('%s/OutputStream.php', $streamDir));
+        $stream->write($source);
+
         $this->writeExceptions();
         foreach ($this->definition->getElements() as $element) {
             if ($processor = $this->getProcessor->forElement($element)) {
+                /** @var ClassBuilder $class */
                 if (!$class = $processor->buildClass()) {
                     continue;
                 }
+                $this->definition->addClass($class, $class->getClassName());
 
                 $path = $this->options->outputDirectory;
                 if ($element instanceof SimpleType) {

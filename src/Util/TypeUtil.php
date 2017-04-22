@@ -15,7 +15,7 @@ class TypeUtil
      */
     public static function isPrimitive(string $type): bool
     {
-        return in_array($type, ['bool', 'int', 'float', 'string', '[]'], true);
+        return in_array($type, ['bool', 'int', 'float', 'double', 'string', '[]'], true);
     }
 
     /**
@@ -24,7 +24,23 @@ class TypeUtil
      */
     public static function typeSpecifier($value): string
     {
-        if (preg_match('/[0-9\.-]+/', (string) $value)) {
+        switch ($value) {
+            case 'bool':
+                return '%s';
+
+            case 'string':
+                return "'%s'";
+
+            case 'float':
+            case 'double':
+                return '%f';
+
+            case 'int':
+            case 'integer':
+                return '%d';
+        }
+
+        if (preg_match('/^\-?\d+\.?\d*$/', (string) $value)) {
             return strpos((string) $value, '.') !== false ? '%f' : '%d';
         } else if ((string) $value === 'true' || (string) $value === 'false') {
             return '%s';
@@ -41,14 +57,14 @@ class TypeUtil
      */
     public static function getVarType($variable): string
     {
-        $type = gettype($variable);
-        switch ($type) {
-            case 'boolean':
-                return 'bool';
-            case 'integer':
-                return 'int';
-            default:
-                return $type;
+        if (preg_match('/^\-?\d+\.?\d*$/', (string) $variable)) {
+            return strpos((string) $variable, '.') !== false ? 'float' : 'int';
+        } else if ((string) $variable === 'true' || (string) $variable === 'false') {
+            return 'bool';
+        } else if ((string) $variable === '[]') {
+            return 'array';
+        } else {
+            return 'string';
         }
     }
 
@@ -77,16 +93,13 @@ class TypeUtil
             case 'boolean':
                 return 'bool';
 
-            case 'short':
             case 'long':
             case 'int':
             case 'integer':
-            case 'unsignedLong':
-            case 'unsignedInt':
-            case 'unsignedShort':
                 return 'int';
 
             case 'decimal':
+            case 'double':
                 return 'float';
 
             default:

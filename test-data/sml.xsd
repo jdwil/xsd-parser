@@ -1,4 +1,4 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://purl.oclc.org/ooxml/spreadsheetml/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:s="http://purl.oclc.org/ooxml/officeDocument/sharedTypes" targetNamespace="http://purl.oclc.org/ooxml/spreadsheetml/main" elementFormDefault="qualified">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://purl.oclc.org/ooxml/spreadsheetml/main" xmlns:r="http://purl.oclc.org/ooxml/officeDocument/relationships" xmlns:s="http://purl.oclc.org/ooxml/officeDocument/sharedTypes" targetNamespace="http://purl.oclc.org/ooxml/spreadsheetml/main" elementFormDefault="qualified">
   <xsd:import namespace="http://schemas.openxmlformats.org/officeDocument/2006/relationships" schemaLocation="shared-relationshipReference.xsd"/>
   <xsd:import namespace="http://purl.oclc.org/ooxml/officeDocument/sharedTypes" schemaLocation="shared-commonSimpleTypes.xsd"/>
   <xsd:complexType name="CT_FilterColumn">
@@ -211,4 +211,293 @@
     </xsd:sequence>
     <xsd:attribute name="conformance" type="s:ST_ConformanceClass"/>
   </xsd:complexType>
+  <xsd:complexType name="CT_DefinedNames">
+    <xsd:sequence>
+      <xsd:element name="definedName" type="CT_DefinedName" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CT_FileRecoveryPr">
+    <xsd:attribute name="autoRecover" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="crashSave" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="dataExtractLoad" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="repairLoad" type="xsd:boolean" use="optional" default="false"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_WebPublishObjects">
+    <xsd:sequence>
+      <xsd:element name="webPublishObject" type="CT_WebPublishObject" minOccurs="1"
+                   maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="count" type="xsd:unsignedInt" use="optional"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_WebPublishObject">
+    <xsd:attribute name="id" type="xsd:unsignedInt" use="required"/>
+    <xsd:attribute name="divId" type="s:ST_Xstring" use="required"/>
+    <xsd:attribute name="sourceObject" type="s:ST_Xstring" use="optional"/>
+    <xsd:attribute name="destinationFile" type="s:ST_Xstring" use="required"/>
+    <xsd:attribute name="title" type="s:ST_Xstring" use="optional"/>
+    <xsd:attribute name="autoRepublish" type="xsd:boolean" use="optional" default="false"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_OleSize">
+    <xsd:attribute name="ref" type="ST_Ref" use="required"/>
+  </xsd:complexType>
+  <xsd:simpleType name="ST_Ref">
+    <xsd:restriction base="xsd:string"/>
+  </xsd:simpleType>
+  <xsd:complexType name="CT_SmartTagPr">
+    <xsd:attribute name="embed" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="show" type="ST_SmartTagShow" use="optional" default="all"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_SmartTagTypes">
+    <xsd:sequence>
+      <xsd:element name="smartTagType" type="CT_SmartTagType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CT_WebPublishing">
+    <xsd:attribute name="css" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="thicket" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="longFileNames" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="vml" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="allowPng" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="targetScreenSize" type="ST_TargetScreenSize" use="optional" default="800x600"/>
+    <xsd:attribute name="dpi" type="xsd:unsignedInt" use="optional" default="96"/>
+    <xsd:attribute name="characterSet" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+  <xsd:simpleType name="ST_TargetScreenSize">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="544x376"/>
+      <xsd:enumeration value="640x480"/>
+      <xsd:enumeration value="720x512"/>
+      <xsd:enumeration value="800x600"/>
+      <xsd:enumeration value="1024x768"/>
+      <xsd:enumeration value="1152x882"/>
+      <xsd:enumeration value="1152x900"/>
+      <xsd:enumeration value="1280x1024"/>
+      <xsd:enumeration value="1600x1200"/>
+      <xsd:enumeration value="1800x1440"/>
+      <xsd:enumeration value="1920x1200"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name="CT_SmartTagType">
+    <xsd:attribute name="namespaceUri" type="s:ST_Xstring" use="optional"/>
+    <xsd:attribute name="name" type="s:ST_Xstring" use="optional"/>
+    <xsd:attribute name="url" type="s:ST_Xstring" use="optional"/>
+  </xsd:complexType>
+  <xsd:simpleType name="ST_SmartTagShow">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="all"/>
+      <xsd:enumeration value="none"/>
+      <xsd:enumeration value="noIndicator"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name="CT_PivotCaches">
+    <xsd:sequence>
+      <xsd:element name="pivotCache" type="CT_PivotCache" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CT_PivotCache">
+    <xsd:attribute name="cacheId" type="xsd:unsignedInt" use="required"/>
+    <xsd:attribute ref="r:id" use="required"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_CalcPr">
+    <xsd:attribute name="calcId" type="xsd:unsignedInt"/>
+    <xsd:attribute name="calcMode" type="ST_CalcMode" use="optional" default="auto"/>
+    <xsd:attribute name="fullCalcOnLoad" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="refMode" type="ST_RefMode" use="optional" default="A1"/>
+    <xsd:attribute name="iterate" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="iterateCount" type="xsd:unsignedInt" use="optional" default="100"/>
+    <xsd:attribute name="iterateDelta" type="xsd:double" use="optional" default="0.001"/>
+    <xsd:attribute name="fullPrecision" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="calcCompleted" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="calcOnSave" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="concurrentCalc" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="concurrentManualCount" type="xsd:unsignedInt" use="optional"/>
+    <xsd:attribute name="forceFullCalc" type="xsd:boolean" use="optional"/>
+  </xsd:complexType>
+  <xsd:simpleType name="ST_CalcMode">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="manual"/>
+      <xsd:enumeration value="auto"/>
+      <xsd:enumeration value="autoNoTable"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:simpleType name="ST_RefMode">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="A1"/>
+      <xsd:enumeration value="R1C1"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:simpleType name="ST_Formula">
+    <xsd:restriction base="s:ST_Xstring"/>
+  </xsd:simpleType>
+  <xsd:complexType name="CT_DefinedName">
+    <xsd:simpleContent>
+      <xsd:extension base="ST_Formula">
+        <xsd:attribute name="name" type="s:ST_Xstring" use="required"/>
+        <xsd:attribute name="comment" type="s:ST_Xstring" use="optional"/>
+        <xsd:attribute name="customMenu" type="s:ST_Xstring" use="optional"/>
+        <xsd:attribute name="description" type="s:ST_Xstring" use="optional"/>
+        <xsd:attribute name="help" type="s:ST_Xstring" use="optional"/>
+        <xsd:attribute name="statusBar" type="s:ST_Xstring" use="optional"/>
+        <xsd:attribute name="localSheetId" type="xsd:unsignedInt" use="optional"/>
+        <xsd:attribute name="hidden" type="xsd:boolean" use="optional" default="false"/>
+        <xsd:attribute name="function" type="xsd:boolean" use="optional" default="false"/>
+        <xsd:attribute name="vbProcedure" type="xsd:boolean" use="optional" default="false"/>
+        <xsd:attribute name="xlm" type="xsd:boolean" use="optional" default="false"/>
+        <xsd:attribute name="functionGroupId" type="xsd:unsignedInt" use="optional"/>
+        <xsd:attribute name="shortcutKey" type="s:ST_Xstring" use="optional"/>
+        <xsd:attribute name="publishToServer" type="xsd:boolean" use="optional" default="false"/>
+        <xsd:attribute name="workbookParameter" type="xsd:boolean" use="optional" default="false"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <xsd:complexType name="CT_ExternalReferences">
+    <xsd:sequence>
+      <xsd:element name="externalReference" type="CT_ExternalReference" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CT_ExternalReference">
+    <xsd:attribute ref="r:id" use="required"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_FunctionGroups">
+    <xsd:sequence maxOccurs="unbounded">
+      <xsd:element name="functionGroup" type="CT_FunctionGroup" minOccurs="0"/>
+    </xsd:sequence>
+    <xsd:attribute name="builtInGroupCount" type="xsd:unsignedInt" default="16" use="optional"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_FunctionGroup">
+    <xsd:attribute name="name" type="s:ST_Xstring"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_WorkbookProtection">
+    <xsd:attribute name="lockStructure" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="lockWindows" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="lockRevision" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="revisionsAlgorithmName" type="s:ST_Xstring" use="optional"/>
+    <xsd:attribute name="revisionsHashValue" type="xsd:base64Binary" use="optional"/>
+    <xsd:attribute name="revisionsSaltValue" type="xsd:base64Binary" use="optional"/>
+    <xsd:attribute name="revisionsSpinCount" type="xsd:unsignedInt" use="optional"/>
+    <xsd:attribute name="workbookAlgorithmName" type="s:ST_Xstring" use="optional"/>
+    <xsd:attribute name="workbookHashValue" type="xsd:base64Binary" use="optional"/>
+    <xsd:attribute name="workbookSaltValue" type="xsd:base64Binary" use="optional"/>
+    <xsd:attribute name="workbookSpinCount" type="xsd:unsignedInt" use="optional"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_FileVersion">
+    <xsd:attribute name="appName" type="xsd:string" use="optional"/>
+    <xsd:attribute name="lastEdited" type="xsd:string" use="optional"/>
+    <xsd:attribute name="lowestEdited" type="xsd:string" use="optional"/>
+    <xsd:attribute name="rupBuild" type="xsd:string" use="optional"/>
+    <xsd:attribute name="codeName" type="s:ST_Guid" use="optional"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_BookViews">
+    <xsd:sequence>
+      <xsd:element name="workbookView" type="CT_BookView" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CT_BookView">
+    <xsd:sequence>
+      <xsd:element name="extLst" type="CT_ExtensionList" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+    <xsd:attribute name="visibility" type="ST_Visibility" use="optional" default="visible"/>
+    <xsd:attribute name="minimized" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="showHorizontalScroll" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="showVerticalScroll" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="showSheetTabs" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="xWindow" type="xsd:int" use="optional"/>
+    <xsd:attribute name="yWindow" type="xsd:int" use="optional"/>
+    <xsd:attribute name="windowWidth" type="xsd:unsignedInt" use="optional"/>
+    <xsd:attribute name="windowHeight" type="xsd:unsignedInt" use="optional"/>
+    <xsd:attribute name="tabRatio" type="xsd:unsignedInt" use="optional" default="600"/>
+    <xsd:attribute name="firstSheet" type="xsd:unsignedInt" use="optional" default="0"/>
+    <xsd:attribute name="activeTab" type="xsd:unsignedInt" use="optional" default="0"/>
+    <xsd:attribute name="autoFilterDateGrouping" type="xsd:boolean" use="optional" default="true"/>
+  </xsd:complexType>
+  <xsd:simpleType name="ST_Visibility">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="visible"/>
+      <xsd:enumeration value="hidden"/>
+      <xsd:enumeration value="veryHidden"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name="CT_CustomWorkbookViews">
+    <xsd:sequence>
+      <xsd:element name="customWorkbookView" minOccurs="1" maxOccurs="unbounded" type="CT_CustomWorkbookView"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CT_FileSharing">
+    <xsd:attribute name="readOnlyRecommended" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="userName" type="s:ST_Xstring"/>
+    <xsd:attribute name="algorithmName" type="s:ST_Xstring" use="optional"/>
+    <xsd:attribute name="hashValue" type="xsd:base64Binary" use="optional"/>
+    <xsd:attribute name="saltValue" type="xsd:base64Binary" use="optional"/>
+    <xsd:attribute name="spinCount" type="xsd:unsignedInt" use="optional"/>
+  </xsd:complexType>
+  <xsd:complexType name="CT_CustomWorkbookView">
+    <xsd:sequence>
+      <xsd:element name="extLst" minOccurs="0" type="CT_ExtensionList"/>
+    </xsd:sequence>
+    <xsd:attribute name="name" type="s:ST_Xstring" use="required"/>
+    <xsd:attribute name="guid" type="s:ST_Guid" use="required"/>
+    <xsd:attribute name="autoUpdate" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="mergeInterval" type="xsd:unsignedInt" use="optional"/>
+    <xsd:attribute name="changesSavedWin" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="onlySync" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="personalView" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="includePrintSettings" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="includeHiddenRowCol" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="maximized" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="minimized" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="showHorizontalScroll" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="showVerticalScroll" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="showSheetTabs" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="xWindow" type="xsd:int" use="optional" default="0"/>
+    <xsd:attribute name="yWindow" type="xsd:int" use="optional" default="0"/>
+    <xsd:attribute name="windowWidth" type="xsd:unsignedInt" use="required"/>
+    <xsd:attribute name="windowHeight" type="xsd:unsignedInt" use="required"/>
+    <xsd:attribute name="tabRatio" type="xsd:unsignedInt" use="optional" default="600"/>
+    <xsd:attribute name="activeSheetId" type="xsd:unsignedInt" use="required"/>
+    <xsd:attribute name="showFormulaBar" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="showStatusbar" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="showComments" type="ST_Comments" use="optional" default="commIndicator"/>
+    <xsd:attribute name="showObjects" type="ST_Objects" use="optional" default="all"/>
+  </xsd:complexType>
+  <xsd:simpleType name="ST_Comments">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="commNone"/>
+      <xsd:enumeration value="commIndicator"/>
+      <xsd:enumeration value="commIndAndComment"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name="CT_WorkbookPr">
+    <xsd:attribute name="date1904" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="showObjects" type="ST_Objects" use="optional" default="all"/>
+    <xsd:attribute name="showBorderUnselectedTables" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="filterPrivacy" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="promptedSolutions" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="showInkAnnotation" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="backupFile" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="saveExternalLinkValues" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="updateLinks" type="ST_UpdateLinks" use="optional" default="userSet"/>
+    <xsd:attribute name="codeName" type="xsd:string" use="optional"/>
+    <xsd:attribute name="hidePivotFieldList" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="showPivotChartFilter" type="xsd:boolean" default="false"/>
+    <xsd:attribute name="allowRefreshQuery" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="publishItems" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="checkCompatibility" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="autoCompressPictures" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="refreshAllConnections" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="defaultThemeVersion" type="xsd:unsignedInt" use="optional"/>
+  </xsd:complexType>
+  <xsd:simpleType name="ST_UpdateLinks">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="userSet"/>
+      <xsd:enumeration value="never"/>
+      <xsd:enumeration value="always"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:simpleType name="ST_Objects">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="all"/>
+      <xsd:enumeration value="placeholders"/>
+      <xsd:enumeration value="none"/>
+    </xsd:restriction>
+  </xsd:simpleType>
 </xsd:schema>

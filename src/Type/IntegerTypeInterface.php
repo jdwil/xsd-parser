@@ -17,12 +17,6 @@ interface IntegerTypeInterface
     public function __toString(): string;
 
     /**
-     * @param int $value
-     * @return mixed
-     */
-    public function setValue(int $value);
-
-    /**
      * @return int
      */
     public function getValue(): int;

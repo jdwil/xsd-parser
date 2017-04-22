@@ -3,10 +3,6 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Stream;
 
-/**
- * Class OutputStream
- * @package JDWil\Xsd\Stream
- */
 class OutputStream
 {
     /**

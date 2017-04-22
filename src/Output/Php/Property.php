@@ -79,6 +79,11 @@ class Property
     public $isCollection = false;
 
     /**
+     * @var string
+     */
+    public $collectionOf;
+
+    /**
      * @var int
      */
     public $collectionMin = 0;
@@ -87,6 +92,11 @@ class Property
      * @var string
      */
     public $collectionMax = '1';
+
+    /**
+     * @var bool
+     */
+    public $isAttribute = true;
 
     /**
      * @param Attribute $attribute
@@ -107,9 +117,9 @@ class Property
 
         $ret = new Property();
         $ret->required = $attribute->getUse() === Attribute::USE_REQUIRED;
+        $ret->default = $attribute->getDefault();
         $ret->name = $attribute->getName();
         $ret->type = $type;
-        $ret->default = $attribute->getDefault();
 
         return $ret;
     }
@@ -132,6 +142,7 @@ class Property
         $ret->collectionMin = $element->getMinOccurs();
         $ret->collectionMax = $element->getMaxOccurs();
         $ret->type = null === $type ? $element->getType() : $type;
+        $ret->isAttribute = false;
         if (null !== $namespace) {
             $ret->namespace = $namespace;
         }

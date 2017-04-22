@@ -5,27 +5,13 @@ namespace JDWil\Xsd;
 
 use JDWil\Xsd\DOM\Definition;
 use JDWil\Xsd\Element\ComplexType;
-use JDWil\Xsd\Element\ElementInterface;
 use JDWil\Xsd\Event\EventDispatcher;
 use JDWil\Xsd\Exception\DocumentException;
 use JDWil\Xsd\Log\Logger;
 use JDWil\Xsd\Log\LoggerInterface;
 use JDWil\Xsd\Output\Php\ClassGenerator;
 use JDWil\Xsd\Output\Php\Processor\ProcessorFactory;
-use JDWil\Xsd\Parser\Normalize\FoundAllListener;
-use JDWil\Xsd\Parser\Normalize\FoundAnnotationListener;
-use JDWil\Xsd\Parser\Normalize\FoundAttributeGroupListener;
-use JDWil\Xsd\Parser\Normalize\FoundAttributeListener;
-use JDWil\Xsd\Parser\Normalize\FoundComplexTypeListener;
-use JDWil\Xsd\Parser\Normalize\FoundExtensionListener;
-use JDWil\Xsd\Parser\Normalize\FoundImportListener;
-use JDWil\Xsd\Parser\Normalize\FoundSchemaListener;
-use JDWil\Xsd\Parser\Normalize\FoundSimpleContentListener;
-use JDWil\Xsd\Parser\Normalize\FoundSimpleTypeListener;
 use JDWil\Xsd\Parser\Parser;
-use JDWil\Xsd\Parser\XsdNormalizer;
-use JDWil\Xsd\Stream\OutputStream;
-use JDWil\Xsd\Translator\PlainTextTranslator;
 
 class Xsd
 {
@@ -82,8 +68,8 @@ class Xsd
     public function dumpInfo()
     {
         $this->options = new Options();
-        $this->options->namespacePrefix = 'JDWil\\Test';
-        $this->options->outputDirectory = __DIR__ . '/../test-dir';
+        $this->options->namespacePrefix = 'JDWil\\Xsd\\Test';
+        $this->options->outputDirectory = __DIR__ . '/../src/Test';
         $this->loadDocument();
 
         $definition = new Definition();

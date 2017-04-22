@@ -6,6 +6,7 @@ namespace JDWil\Xsd\DOM;
 use JDWil\Xsd\Element\AbstractElement;
 use JDWil\Xsd\Element\ElementInterface;
 use JDWil\Xsd\Element\Schema;
+use JDWil\Xsd\Output\Php\ClassBuilder;
 
 /**
  * Class Definition
@@ -17,6 +18,11 @@ class Definition
      * @var AbstractElement[]
      */
     private $elements;
+
+    /**
+     * @var ClassBuilder[]
+     */
+    private $classes;
 
     /**
      * Definition constructor.
@@ -40,6 +46,24 @@ class Definition
     public function getElements(): array
     {
         return $this->elements;
+    }
+
+    /**
+     * @param ClassBuilder $class
+     * @param string $name
+     */
+    public function addClass(ClassBuilder $class, string $name)
+    {
+        $this->classes[$name] = $class;
+    }
+
+    /**
+     * @param string $name
+     * @return ClassBuilder|null
+     */
+    public function findClass(string $name)
+    {
+        return $this->classes[$name] ?? null;
     }
 
     /**

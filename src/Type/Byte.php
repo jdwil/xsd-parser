@@ -8,37 +8,42 @@ use JDWil\Xsd\Exception\ValidationException;
 class Byte extends AbstractIntegerType
 {
     /**
-     * @return string
-     * @throws ValidationException
-     */
-    public function __toString(): string
-    {
-        if (!$this->isInRange($this->value)) {
-            throw new ValidationException('byte is out of range');
-        }
-        return sprintf('%d', $this->value);
-    }
-
-    /**
+     * Byte constructor.
      * @param int $value
-     * @return mixed
      * @throws ValidationException
      */
-    public function setValue(int $value)
+    public function __construct(int $value)
     {
         if (!$this->isInRange($value)) {
-            throw new ValidationException('byte is out of range');
+            $this->throwNotValid();
         }
 
         $this->value = $value;
     }
 
     /**
+     * @return string
+     * @throws ValidationException
+     */
+    public function __toString(): string
+    {
+        return sprintf('%d', $this->value);
+    }
+
+    /**
      * @param int $number
      * @return bool
      */
-    public function isInRange(int $number)
+    private function isInRange(int $number)
     {
         return $number >= -128 && $number <= 127;
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function throwNotValid()
+    {
+        throw new ValidationException('byte is out of range');
     }
 }

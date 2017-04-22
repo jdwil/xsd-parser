@@ -34,12 +34,4 @@ class Date
     {
         return $this->value;
     }
-
-    /**
-     * @param \DateTime $value
-     */
-    public function setValue(\DateTime $value)
-    {
-        $this->value = $value;
-    }
 }
