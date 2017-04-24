@@ -29,4 +29,20 @@ class Documentation extends AbstractElement
         $this->source = $source;
         $this->lang = $lang;
     }
+
+    /**
+     * @return string
+     */
+    public function getSource()
+    {
+        return $this->source;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLang()
+    {
+        return $this->lang;
+    }
 }

@@ -22,4 +22,12 @@ class Appinfo extends AbstractElement
     {
         $this->source = $source;
     }
+
+    /**
+     * @return null|string
+     */
+    public function getSource()
+    {
+        return $this->source;
+    }
 }

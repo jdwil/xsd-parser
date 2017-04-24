@@ -50,4 +50,36 @@ class Any extends IdentifiableElement
         $this->processContents = $processContents;
         parent::__construct($id);
     }
+
+    /**
+     * @return int
+     */
+    public function getMaxOccurs(): int
+    {
+        return $this->maxOccurs;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMinOccurs(): int
+    {
+        return $this->minOccurs;
+    }
+
+    /**
+     * @return string
+     */
+    public function getNamespace(): string
+    {
+        return $this->namespace;
+    }
+
+    /**
+     * @return string
+     */
+    public function getProcessContents(): string
+    {
+        return $this->processContents;
+    }
 }

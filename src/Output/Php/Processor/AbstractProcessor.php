@@ -6,10 +6,29 @@ namespace JDWil\Xsd\Output\Php\Processor;
 use Doctrine\Common\Inflector\Inflector;
 use JDWil\Xsd\DOM\Definition;
 use JDWil\Xsd\Element\AbstractElement;
+use JDWil\Xsd\Element\Annotation;
+use JDWil\Xsd\Element\Appinfo;
 use JDWil\Xsd\Element\ComplexType;
+use JDWil\Xsd\Element\Documentation;
+use JDWil\Xsd\Element\Restriction;
 use JDWil\Xsd\Element\SimpleType;
 use JDWil\Xsd\Exception\FileSystemException;
+use JDWil\Xsd\Exception\TypeNotFoundException;
+use JDWil\Xsd\Facet\Enumeration;
+use JDWil\Xsd\Facet\FacetInterface;
+use JDWil\Xsd\Facet\FractionDigits;
+use JDWil\Xsd\Facet\Length;
+use JDWil\Xsd\Facet\MaxExclusive;
+use JDWil\Xsd\Facet\MaxInclusive;
+use JDWil\Xsd\Facet\MaxLength;
+use JDWil\Xsd\Facet\MinExclusive;
+use JDWil\Xsd\Facet\MinInclusive;
+use JDWil\Xsd\Facet\MinLength;
+use JDWil\Xsd\Facet\Pattern;
+use JDWil\Xsd\Facet\TotalDigits;
+use JDWil\Xsd\Facet\WhiteSpace;
 use JDWil\Xsd\Options;
+use JDWil\Xsd\Output\Php\AnnotatedObjectInterface;
 use JDWil\Xsd\Output\Php\Argument;
 use JDWil\Xsd\Output\Php\ClassBuilder;
 use JDWil\Xsd\Output\Php\Method;
@@ -38,6 +57,11 @@ abstract class AbstractProcessor implements ProcessorInterface
     protected $definition;
 
     /**
+     * @var Property
+     */
+    protected $classProperty;
+
+    /**
      * AbstractProcessor constructor.
      * @param Options $options
      * @param Definition $definition
@@ -56,6 +80,138 @@ abstract class AbstractProcessor implements ProcessorInterface
         }
     }
 
+    protected function initializeValueProperty()
+    {
+        $this->classProperty = new Property();
+        $this->classProperty->name = 'value';
+        $this->classProperty->type = 'string';
+        $this->classProperty->required = true;
+        $this->classProperty->immutable = true;
+        $this->class->addProperty($this->classProperty);
+    }
+
+    /**
+     * @param Restriction $restriction
+     */
+    protected function processRestriction(Restriction $restriction)
+    {
+        if (null === $this->classProperty) {
+            $this->initializeValueProperty();
+        }
+        $this->class->uses(sprintf('use %s\\Exception\\ValidationException;', $this->options->namespacePrefix));
+
+        /** @var FacetInterface $facet */
+        foreach ($restriction->getFacets() as $facet) {
+            switch (get_class($facet)) {
+                case MinExclusive::class:
+                    $this->class->setMinValue((int) $facet->getValue() + 1);
+                    $this->classProperty->type = 'int';
+                    break;
+
+                case MinInclusive::class:
+                    $this->class->setMinValue((int) $facet->getValue());
+                    $this->classProperty->type = 'int';
+                    break;
+
+                case MaxExclusive::class:
+                    $this->class->setMaxValue((int) $facet->getValue() - 1);
+                    $this->classProperty->type = 'int';
+                    break;
+
+                case MaxInclusive::class:
+                    $this->class->setMaxValue((int) $facet->getValue());
+                    $this->classProperty->type = 'int';
+                    break;
+
+                case TotalDigits::class:
+                    $this->class->setTotalDigits((int) $facet->getValue());
+                    $this->classProperty->type = 'int';
+                    break;
+
+                case FractionDigits::class:
+                    $this->class->setFractionDigits((int) $facet->getValue());
+                    $this->classProperty->type = 'float';
+                    break;
+
+                case Length::class:
+                    $this->class->setValueLength((int) $facet->getValue());
+                    break;
+
+                case MinLength::class:
+                    $this->class->setValueMinLength((int) $facet->getValue());
+                    break;
+
+                case MaxLength::class:
+                    $this->class->setValueMaxLength((int) $facet->getValue());
+                    break;
+
+                case Enumeration::class:
+                    $this->class->addEnumeration($facet->getValue());
+                    $this->class->addConstant(sprintf('VALUE_%s', strtoupper($facet->getValue())), $facet->getValue());
+                    break;
+
+                case WhiteSpace::class:
+                    $this->class->setWhiteSpace($facet->getValue());
+                    break;
+
+                case Pattern::class:
+                    $this->class->setValuePattern($facet->getValue());
+                    break;
+            }
+        }
+
+        foreach ($restriction->getChildren() as $child) {
+            if ($child instanceof SimpleType) {
+                $this->extendSimpleType($child);
+            }
+        }
+    }
+
+    /**
+     * @param Annotation $annotation
+     * @param AnnotatedObjectInterface $object
+     * @return string
+     */
+    protected function processAnnotation(Annotation $annotation, AnnotatedObjectInterface $object): string
+    {
+        $ret = '';
+        foreach ($annotation->getChildren() as $child) {
+            if ($child instanceof Appinfo) {
+                if ($source = $child->getSource()) {
+                    $ret .= sprintf("Source: %s\n", $source);
+                }
+                $ret .= sprintf("%s\n", $child->getNode()->nodeValue);
+            } else if ($child instanceof Documentation) {
+                if ($source = $child->getSource()) {
+                    $ret .= sprintf("Source: %s\n", $source);
+                }
+                $ret .= sprintf("%s\n", $child->getNode()->nodeValue);
+            }
+        }
+
+        $object->setAnnotation($ret);
+
+        return $ret;
+    }
+
+    /**
+     * @param SimpleType $type
+     */
+    protected function extendSimpleType(SimpleType $type)
+    {
+        $processor = new SimpleTypeProcessor($type, $this->options, $this->definition);
+        $class = $processor->buildClass();
+        foreach ($class->getProperties() as $property) {
+            $this->class->addProperty($property);
+        }
+        foreach ($class->getMethods() as $method) {
+            $this->class->addMethod($method);
+        }
+        foreach ($class->getUses() as $uses) {
+            $this->class->uses($uses);
+        }
+    }
+
     /**
      * @param string $type
      * @param string $namespace
@@ -67,7 +223,8 @@ abstract class AbstractProcessor implements ProcessorInterface
     protected function buildCollection(string $type, string $namespace, int $min, int $max): ClassBuilder
     {
         if (strpos($type, ':') !== false) {
-            $type = array_pop(explode(':', $type));
+            $pieces = explode(':', $type);
+            $type = array_pop($pieces);
         }
         $className = sprintf('%sCollection', $type);
         $builder = new ClassBuilder($this->options);
@@ -267,14 +424,14 @@ _BODY_;
      * @param string $ref
      * @param AbstractElement $element
      * @return AbstractElement
-     * @throws \Exception
+     * @throws TypeNotFoundException
      */
     protected function resolveReference(string $ref, AbstractElement $element): AbstractElement
     {
         list($namespace, $name) = $this->definition->determineNamespace($ref, $element);
         $ret = $this->definition->findElementByName($name, $namespace);
         if (null === $ret) {
-            throw new \Exception(sprintf('Type not found: %s', $ref));
+            throw new TypeNotFoundException($ref);
         }
 
         return $ret;
@@ -352,7 +509,6 @@ _SUB_;
         $end = $needsClosingTag ? '>' : '/>';
         if (count($attributes)) {
             $body .= sprintf("        \$stream->write(sprintf('<%%s', \$tagName));\n");
-            //%s));\n", implode(' ', $specifiers), $end, implode(', ', $attributes));
             /** @var Property $attribute */
             foreach ($attributes as $attribute) {
                 $getter = $attribute->isPrimitive() ? '' : '->getValue()';
@@ -364,7 +520,7 @@ _SUB_;
                     $body .= sprintf("            \$stream->write(sprintf(' %s=\"%%s\" ', %s));\n", $attribute->name, $accessor);
                     $body .= sprintf("        }\n");
                 } else {
-                    $body .= sprintf("            \$stream->write(sprintf(' %s=\"%%s\" ', %s));\n", $attribute->name, $accessor);
+                    $body .= sprintf("        \$stream->write(sprintf(' %s=\"%%s\" ', %s));\n", $attribute->name, $accessor);
                 }
             }
             $body .= sprintf("        \$stream->write('%s');\n", $end);

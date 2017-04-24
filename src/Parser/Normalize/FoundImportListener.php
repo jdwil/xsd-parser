@@ -61,6 +61,7 @@ class FoundImportListener implements EventListenerInterface
             return;
         }
 
+        // @todo This is probably not the correct way to do this. It works for the Excel schema.
         $baseUri = $node->baseURI;
         $pieces = explode('/', $baseUri);
         array_pop($pieces);

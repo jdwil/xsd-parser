@@ -6,6 +6,7 @@ namespace JDWil\Xsd\Output\Php;
 use Doctrine\Common\Inflector\Inflector;
 use JDWil\Xsd\Exception\ValidationException;
 use JDWil\Xsd\Options;
+use JDWil\Xsd\Output\Php\Traits\AnnotatedObjectTrait;
 use JDWil\Xsd\Stream\OutputStream;
 use JDWil\Xsd\Util\TypeUtil;
 
@@ -13,8 +14,10 @@ use JDWil\Xsd\Util\TypeUtil;
  * Class ClassBuilder
  * @package JDWil\Xsd\Output\Php
  */
-class ClassBuilder
+class ClassBuilder implements AnnotatedObjectInterface
 {
+    use AnnotatedObjectTrait;
+
     const DEFAULT_COLLECTION_NAME = 'items';
 
     const FINAL = 'final';
@@ -320,6 +323,15 @@ class ClassBuilder
     }
 
     /**
+     * @return ClassBuilder
+     */
+    public function resetProperties(): ClassBuilder
+    {
+        $this->properties = [];
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getClassName(): string
@@ -545,7 +557,11 @@ class ClassBuilder
     {
         foreach ($this->properties as $key => $property) {
             $stream->writeLine('    /**');
-            $stream->writeLine(sprintf('     * @var %s', $property->type));
+            if ($property->isCollection && TypeUtil::isPrimitive($property->type)) {
+                $stream->writeLine(sprintf('     * @var %s[]', $property->type));
+            } else {
+                $stream->writeLine(sprintf('     * @var %s', $property->type));
+            }
             $stream->writeLine('     */');
             $stream->writeLine(sprintf('    %s $%s;', $property->visibility, $property->name));
             $stream->write("\n");
@@ -566,7 +582,11 @@ class ClassBuilder
                     $type = TypeUtil::getVarType($property->default);
                 }
                 if ($type) {
-                    $stream->writeLine(sprintf('     * @param %s $%s', $type, $property->name));
+                    if ($property->isCollection && $this->simpleType) {
+                        $stream->writeLine(sprintf('     * @param %s[] $%s', $type, $property->name));
+                    } else {
+                        $stream->writeLine(sprintf('     * @param %s $%s', $type, $property->name));
+                    }
                 } else {
                     $stream->writeLine(sprintf('     * @param mixed $%s', $property->name));
                 }
@@ -613,7 +633,7 @@ class ClassBuilder
          * Set properties within constructor
          */
         foreach ($this->properties as $property) {
-            if ($property->fixed) {
+            if ($property->fixed || $property->isCollection) {
                 if (null !== $property->default && TypeUtil::isPrimitive($property->default)) {
                     $specifier = TypeUtil::typeSpecifier($property->default);
                     $value = $property->default;
@@ -622,14 +642,27 @@ class ClassBuilder
                     }
                     $stream->writeLine(sprintf("        \$this->%s = {$specifier};", $property->name, $value));
                 } else {
-                    $stream->writeLine(sprintf('        $this->%s = new %s();', $property->name, $property->default));
+                    if ($property->isCollection) {
+                        if ($this->simpleType) {
+                            $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
+                        } else {
+                            $stream->writeLine(sprintf('        $this->%s = [];', $property->name));
+                        }
+                    } else {
+                        $stream->writeLine(sprintf('        $this->%s = new %s();', $property->name, $property->default));
+                    }
                 }
             } else if ($this->isNonPrimitiveWithDefault($property)) {
-                $stream->writeLine(sprintf('        $this->%s = new %s($%s);',
-                    $property->name,
-                    $property->type,
-                    $property->name
-                ));
+                if ($property->isCollection) {
+                    $stream->writeLine(sprintf('        $this->%s = new %s();', $property->name, $property->type));
+                    $stream->writeLine(sprintf('        $this->%s->add($%s);', $property->name, $property->name));
+                } else {
+                    $stream->writeLine(sprintf('        $this->%s = new %s($%s);',
+                        $property->name,
+                        $property->type,
+                        $property->name
+                    ));
+                }
             } else if ($this->includeInConstructor($property)) {
                 $stream->writeLine(sprintf('        $this->%s = $%s;', $property->name, $property->name));
             }
@@ -721,11 +754,18 @@ class ClassBuilder
             $stream->writeLine('     * @throws ValidationException');
         }
         $stream->writeLine('     */');
-        $stream->writeLine(sprintf('    public function set%s(%s $%s)',
-            ucwords($property->name),
-            $property->type,
-            $property->name
-        ));
+        if ($property->type !== 'mixed') {
+            $stream->writeLine(sprintf('    public function set%s(%s $%s)',
+                ucwords($property->name),
+                $property->type,
+                $property->name
+            ));
+        } else {
+            $stream->writeLine(sprintf('    public function set%s($%s)',
+                ucwords($property->name),
+                $property->name
+            ));
+        }
         $stream->writeLine('    {');
         if ($property->choiceGroup) {
             $statements = [];
@@ -954,6 +994,10 @@ class ClassBuilder
             return false;
         }
 
+        if ($property->isCollection && $this->simpleType) {
+            return true;
+        }
+
         if (!$property->required && !$property->default) {
             return false;
         }
@@ -990,14 +1034,13 @@ class ClassBuilder
         $type = $property->type;
         if ($type && null !== $property->default && !TypeUtil::isPrimitive($type)) {
             $type = TypeUtil::getVarType($property->default);
-            if ($property->name === 'dpi') {
-                echo $property->default . "\n";
-            }
         }
+
+        $splat = $property->isCollection && $this->simpleType ? '...' : '';
         if ($type) {
-            $stream->write(sprintf('%s $%s', $type, $property->name));
+            $stream->write(sprintf('%s %s$%s', $type, $splat, $property->name));
         } else {
-            $stream->write(sprintf('$%s', $property->name));
+            $stream->write(sprintf('%s$%s', $splat, $property->name));
         }
         if ($property->default) {
             if (TypeUtil::isPrimitive($type)) {

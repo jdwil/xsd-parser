@@ -40,11 +40,6 @@ final class SimpleTypeProcessor extends AbstractProcessor
     protected $type;
 
     /**
-     * @var Property
-     */
-    protected $classProperty;
-
-    /**
      * SimpleTypeProcessor constructor.
      * @param SimpleType $element
      * @param Options $options
@@ -61,18 +56,13 @@ final class SimpleTypeProcessor extends AbstractProcessor
      */
     public function buildClass()
     {
-        $this->classProperty = new Property();
-        $this->classProperty->name = 'value';
-        $this->classProperty->type = 'string';
-        $this->classProperty->required = true;
-        $this->classProperty->immutable = true;
+        $this->initializeValueProperty();
 
         $this->class->setSimpleType(true);
         $this->class->setNamespace(sprintf('%s\\SimpleType', $this->options->namespacePrefix));
         $this->class->setClassName($this->type->getName());
         $this->initializeClass();
         $this->processClassAttributes();
-        $this->class->addProperty($this->classProperty);
 
         return $this->class;
     }
@@ -86,81 +76,6 @@ final class SimpleTypeProcessor extends AbstractProcessor
                 $this->processList($child);
             } else if ($child instanceof Union) {
                 $this->processUnion($child);
-            }
-        }
-    }
-
-    /**
-     * @param Restriction $restriction
-     */
-    protected function processRestriction(Restriction $restriction)
-    {
-        $this->class->uses(sprintf('use %s\\Exception\\ValidationException;', $this->options->namespacePrefix));
-
-        /** @var FacetInterface $facet */
-        foreach ($restriction->getFacets() as $facet) {
-            switch (get_class($facet)) {
-                case MinExclusive::class:
-                    $this->class->setMinValue((int) $facet->getValue() + 1);
-                    $this->classProperty->type = 'int';
-                    break;
-
-                case MinInclusive::class:
-                    $this->class->setMinValue((int) $facet->getValue());
-                    $this->classProperty->type = 'int';
-                    break;
-
-                case MaxExclusive::class:
-                    $this->class->setMaxValue((int) $facet->getValue() - 1);
-                    $this->classProperty->type = 'int';
-                    break;
-
-                case MaxInclusive::class:
-                    $this->class->setMaxValue((int) $facet->getValue());
-                    $this->classProperty->type = 'int';
-                    break;
-
-                case TotalDigits::class:
-                    $this->class->setTotalDigits((int) $facet->getValue());
-                    $this->classProperty->type = 'int';
-                    break;
-
-                case FractionDigits::class:
-                    $this->class->setFractionDigits((int) $facet->getValue());
-                    $this->classProperty->type = 'float';
-                    break;
-
-                case Length::class:
-                    $this->class->setValueLength((int) $facet->getValue());
-                    break;
-
-                case MinLength::class:
-                    $this->class->setValueMinLength((int) $facet->getValue());
-                    break;
-
-                case MaxLength::class:
-                    $this->class->setValueMaxLength((int) $facet->getValue());
-                    break;
-
-                case Enumeration::class:
-                    $this->class->addEnumeration($facet->getValue());
-                    $this->class->addConstant(sprintf('VALUE_%s', strtoupper($facet->getValue())), $facet->getValue());
-                    break;
-
-                case WhiteSpace::class:
-                    $this->class->setWhiteSpace($facet->getValue());
-                    break;
-
-                case Pattern::class:
-                    $this->class->setValuePattern($facet->getValue());
-                    break;
-            }
-        }
-
-        foreach ($restriction->getChildren() as $child) {
-            if ($child instanceof SimpleType) {
-                // @todo figure this out
-                throw new \Exception('dont know what to do here');
             }
         }
     }
@@ -185,7 +100,9 @@ final class SimpleTypeProcessor extends AbstractProcessor
             $property->type = $typeName;
             $property->immutable = true;
             $property->createGetter = false;
-            $property->fixed = true;
+            $property->isCollection = true;
+            $property->collectionOf = $typeName;
+            $this->class->resetProperties();
             $this->class->addProperty($property);
         } else {
             foreach ($list->getChildren() as $child) {
@@ -197,25 +114,6 @@ final class SimpleTypeProcessor extends AbstractProcessor
             // @todo implement this
             throw new \Exception('simpleTypes nested in lists are not implemented yet.');
         }
-
-        // @todo let the ClassBuilder do this.
-        $method = new Method();
-        $method->name = 'add';
-        $method->addArgument(new Argument('item', $typeName));
-        $body = <<<_BODY_
-        \$this->items[] = \$item;
-_BODY_;
-        $method->body = $body;
-        $this->class->addMethod($method);
-
-        $method = new Method();
-        $method->name = 'all';
-        $method->returns = 'array';
-        $body = <<<_BODY_
-        return \$this->items;
-_BODY_;
-        $method->body = $body;
-        $this->class->addMethod($method);
     }
 
     /**

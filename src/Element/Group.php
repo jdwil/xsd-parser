@@ -61,4 +61,36 @@ class Group extends IdentifiableElement
         $this->minOccurs = $minOccurs;
         parent::__construct($id);
     }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRef()
+    {
+        return $this->ref;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMaxOccurs(): string
+    {
+        return $this->maxOccurs;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMinOccurs(): int
+    {
+        return $this->minOccurs;
+    }
 }

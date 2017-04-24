@@ -5,14 +5,17 @@ namespace JDWil\Xsd\Output\Php;
 
 use JDWil\Xsd\Element\Attribute;
 use JDWil\Xsd\Element\Element;
+use JDWil\Xsd\Output\Php\Traits\AnnotatedObjectTrait;
 use JDWil\Xsd\Util\TypeUtil;
 
 /**
  * Class Property
  * @package JDWil\Xsd\Output\Php
  */
-class Property
+class Property implements AnnotatedObjectInterface
 {
+    use AnnotatedObjectTrait;
+
     /**
      * @var string
      */
