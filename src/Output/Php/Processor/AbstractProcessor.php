@@ -373,13 +373,13 @@ _BODY_;
      */
     protected function normalizeTypes(array $types): array
     {
-        $type = $classNs = $ns = '';
         $ret = [];
         foreach ($types as $name) {
             if ($name instanceof Enum) {
                 $ret[] = $name;
                 continue;
             }
+            $type = $classNs = $ns = '';
             $this->analyzeType($name, $type, $classNs, $ns);
             $ret[$type] = $classNs;
         }

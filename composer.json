@@ -13,7 +13,15 @@
             "JDWil\\Xsd\\" : "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4" : {
+            "JDWil\\Xsd\\" : "test/"
+        }
+    },
     "require": {
         "doctrine/inflector": "^1.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.1"
     }
 }

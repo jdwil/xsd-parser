@@ -7,7 +7,7 @@ use Doctrine\Common\Inflector\Inflector;
 use JDWil\Xsd\Exception\ValidationException;
 use JDWil\Xsd\Options;
 use JDWil\Xsd\Output\Php\Traits\AnnotatedObjectTrait;
-use JDWil\Xsd\Stream\OutputStream;
+use JDWil\Xsd\Stream\OutputStreamInterface;
 use JDWil\Xsd\Util\TypeUtil;
 
 /**
@@ -477,9 +477,9 @@ class ClassBuilder implements AnnotatedObjectInterface
     }
 
     /**
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    public function writeTo(OutputStream $stream)
+    public function writeTo(OutputStreamInterface $stream)
     {
         $this->sortProperties();
 
@@ -551,16 +551,20 @@ class ClassBuilder implements AnnotatedObjectInterface
     }
 
     /**
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    private function writeProperties(OutputStream $stream)
+    private function writeProperties(OutputStreamInterface $stream)
     {
         foreach ($this->properties as $key => $property) {
             $stream->writeLine('    /**');
-            if ($property->isCollection && TypeUtil::isPrimitive($property->type)) {
-                $stream->writeLine(sprintf('     * @var %s[]', $property->type));
+            if ($property->type) {
+                if ($property->isCollection && TypeUtil::isPrimitive($property->type)) {
+                    $stream->writeLine(sprintf('     * @var %s[]', $property->type));
+                } else {
+                    $stream->writeLine(sprintf('     * @var %s', $property->type));
+                }
             } else {
-                $stream->writeLine(sprintf('     * @var %s', $property->type));
+                $stream->writeLine('     * @var mixed');
             }
             $stream->writeLine('     */');
             $stream->writeLine(sprintf('    %s $%s;', $property->visibility, $property->name));
@@ -569,9 +573,9 @@ class ClassBuilder implements AnnotatedObjectInterface
     }
 
     /**
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    private function writeConstructorDocBlock(OutputStream $stream)
+    private function writeConstructorDocBlock(OutputStreamInterface $stream)
     {
         $stream->writeLine('    /**');
         $stream->writeLine(sprintf('     * %s constructor', $this->className));
@@ -599,9 +603,9 @@ class ClassBuilder implements AnnotatedObjectInterface
     }
 
     /**
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    private function writeConstructor(OutputStream $stream)
+    private function writeConstructor(OutputStreamInterface $stream)
     {
         /**
          * Write the constructor
@@ -687,9 +691,9 @@ class ClassBuilder implements AnnotatedObjectInterface
     }
 
     /**
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    private function writeGettersAndSetters(OutputStream $stream)
+    private function writeGettersAndSetters(OutputStreamInterface $stream)
     {
         /**
          * Getters and Setters
@@ -719,9 +723,9 @@ class ClassBuilder implements AnnotatedObjectInterface
 
     /**
      * @param Property $property
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    private function writeGetter(Property $property, OutputStream $stream)
+    private function writeGetter(Property $property, OutputStreamInterface $stream)
     {
         $stream->write("\n");
         $stream->writeLine('    /**');
@@ -743,9 +747,9 @@ class ClassBuilder implements AnnotatedObjectInterface
 
     /**
      * @param Property $property
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    private function writeSetter(Property $property, OutputStream $stream)
+    private function writeSetter(Property $property, OutputStreamInterface $stream)
     {
         $stream->write("\n");
         $stream->writeLine('    /**');
@@ -791,9 +795,9 @@ class ClassBuilder implements AnnotatedObjectInterface
 
     /**
      * @param Property $property
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    private function writeAller(Property $property, OutputStream $stream)
+    private function writeAller(Property $property, OutputStreamInterface $stream)
     {
         $stream->write("\n");
         $methodName = 'all';
@@ -828,9 +832,9 @@ class ClassBuilder implements AnnotatedObjectInterface
 
     /**
      * @param Property $property
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    private function writeAdder(Property $property, OutputStream $stream)
+    private function writeAdder(Property $property, OutputStreamInterface $stream)
     {
         $stream->write("\n");
         $methodName = 'add';
@@ -853,9 +857,9 @@ class ClassBuilder implements AnnotatedObjectInterface
     }
 
     /**
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    private function writeOtherMethods(OutputStream $stream)
+    private function writeOtherMethods(OutputStreamInterface $stream)
     {
         /**
          * Other methods
@@ -1027,9 +1031,9 @@ class ClassBuilder implements AnnotatedObjectInterface
 
     /**
      * @param Property $property
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    private function writeMethodArgument(Property $property, OutputStream $stream)
+    private function writeMethodArgument(Property $property, OutputStreamInterface $stream)
     {
         $type = $property->type;
         if ($type && null !== $property->default && !TypeUtil::isPrimitive($type)) {
@@ -1071,9 +1075,9 @@ class ClassBuilder implements AnnotatedObjectInterface
     }
 
     /**
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    private function writeConstructorValidators(OutputStream $stream)
+    private function writeConstructorValidators(OutputStreamInterface $stream)
     {
         if (!$this->simpleType) {
             return;
@@ -1192,9 +1196,9 @@ class ClassBuilder implements AnnotatedObjectInterface
 
     /**
      * @param array $lines
-     * @param OutputStream $stream
+     * @param OutputStreamInterface $stream
      */
-    private function writeLines(array $lines, OutputStream $stream)
+    private function writeLines(array $lines, OutputStreamInterface $stream)
     {
         foreach ($lines as $line) {
             $stream->writeLine($line);

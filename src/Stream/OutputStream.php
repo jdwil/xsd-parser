@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Stream;
 
-class OutputStream
+class OutputStream implements OutputStreamInterface
 {
     /**
      * @var
@@ -40,6 +40,6 @@ class OutputStream
      */
     public function writeLine(string $data)
     {
-        fwrite($this->handle, sprintf("%s\n", $data));
+        $this->write(sprintf("%s\n", $data));
     }
 }

@@ -26,7 +26,7 @@ class EventDispatcher implements EventDispatcherInterface
     {
         $globPath = __dir__ . '/../Parser/Normalize/*.php';
         foreach (glob($globPath) as $file) {
-            include $file;
+            include_once $file;
         }
 
         $ret = new EventDispatcher();
