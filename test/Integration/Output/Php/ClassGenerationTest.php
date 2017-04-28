@@ -38,6 +38,7 @@ class ClassGenerationTest extends TestCase
     {
         $this->options = new Options();
         $this->options->namespacePrefix = 'JDWil\\Xsd\\Test';
+        $this->options->outputDirectory = sprintf('%s/Output', __DIR__);
         $this->definition = new Definition();
         $this->getProcessor = new ProcessorFactory($this->options, $this->definition);
     }
@@ -68,7 +69,8 @@ class ClassGenerationTest extends TestCase
                         $class->writeTo($stream);
                         $this->assertStringEqualsFile(
                             sprintf('%s/data/%s/%s', __DIR__, $directory->getFilename(), $file->getFilename()),
-                            $this->source
+                            $this->source,
+                            sprintf('Failed in %s', $directory->getFilename())
                         );
                     }
                 }

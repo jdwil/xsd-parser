@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace JDWil\Xsd\Test\SimpleType;
 
 use JDWil\Xsd\Test\Exception\ValidationException;
+use JDWil\Xsd\Test\Xsd\Token;
 
 class ST_Enum
 {
@@ -12,16 +13,16 @@ class ST_Enum
     const VALUE_THREE = 'three';
 
     /**
-     * @var string
+     * @var Token
      */
     protected $value;
 
     /**
      * ST_Enum constructor
-     * @param string $value
+     * @param Token $value
      * @throws ValidationException
      */
-    public function __construct(string $value)
+    public function __construct(Token $value)
     {
         $this->value = $value;
 
@@ -31,9 +32,9 @@ class ST_Enum
     }
 
     /**
-     * @return string
+     * @return Token
      */
-    public function getValue(): string
+    public function getValue(): Token
     {
         return $this->value;
     }

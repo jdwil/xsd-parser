@@ -99,8 +99,11 @@ class TypeUtil
                 return 'int';
 
             case 'decimal':
-            case 'double':
+            case 'float':
                 return 'float';
+
+            case 'double':
+                return 'double';
 
             default:
                 return null;

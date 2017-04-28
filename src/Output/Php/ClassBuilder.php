@@ -103,14 +103,24 @@ class ClassBuilder implements AnnotatedObjectInterface
     private $simpleType;
 
     /**
-     * @var int
+     * @var float|double|int
      */
-    private $minValue;
+    private $minInclusive;
 
     /**
-     * @var int
+     * @var float|double|int
      */
-    private $maxValue;
+    private $minExclusive;
+
+    /**
+     * @var float|double|int
+     */
+    private $maxInclusive;
+
+    /**
+     * @var float|double|int
+     */
+    private $maxExclusive;
 
     /**
      * @var int
@@ -348,19 +358,35 @@ class ClassBuilder implements AnnotatedObjectInterface
     }
 
     /**
-     * @param int $minValue
+     * @param float|double|int $minInclusive
      */
-    public function setMinValue(int $minValue)
+    public function setMinInclusive($minInclusive)
     {
-        $this->minValue = $minValue;
+        $this->minInclusive = $minInclusive;
     }
 
     /**
-     * @param int $maxValue
+     * @param float|double|int $maxInclusive
      */
-    public function setMaxValue(int $maxValue)
+    public function setMaxInclusive($maxInclusive)
     {
-        $this->maxValue = $maxValue;
+        $this->maxInclusive = $maxInclusive;
+    }
+
+    /**
+     * @param float|double|int $minExclusive
+     */
+    public function setMinExclusive($minExclusive)
+    {
+        $this->minExclusive = $minExclusive;
+    }
+
+    /**
+     * @param float|double|int $maxExclusive
+     */
+    public function setMaxExclusive($maxExclusive)
+    {
+        $this->maxExclusive = $maxExclusive;
     }
 
     /**
@@ -1062,8 +1088,10 @@ class ClassBuilder implements AnnotatedObjectInterface
     private function hasValidators(): bool
     {
         return
-            null !== $this->minValue ||
-            null !== $this->maxValue ||
+            null !== $this->minInclusive ||
+            null !== $this->minExclusive ||
+            null !== $this->maxInclusive ||
+            null !== $this->maxExclusive ||
             null !== $this->totalDigits ||
             null !== $this->fractionDigits ||
             null !== $this->valueLength ||
@@ -1083,28 +1111,46 @@ class ClassBuilder implements AnnotatedObjectInterface
             return;
         }
 
-        if (null !== $this->minValue) {
+        $type = $this->properties[0]->type;
+
+        if (null !== $this->minInclusive) {
             $stream->write("\n");
-            $minSpecifier = TypeUtil::typeSpecifier($this->minValue);
-            $stream->writeLine(sprintf("        if (\$this->value < {$minSpecifier}) {", $this->minValue));
+            $minSpecifier = TypeUtil::typeSpecifier($type);
+            $stream->writeLine(sprintf("        if (\$this->value < {$minSpecifier}) {", $this->minInclusive));
             $stream->writeLine('            throw new ValidationException(\'value out of bounds\');');
             $stream->writeLine('        }');
         }
 
-        if (null !== $this->maxValue) {
+        if (null !== $this->minExclusive) {
             $stream->write("\n");
-            $maxSpecifier = TypeUtil::typeSpecifier($this->maxValue);
-            $stream->writeLine(sprintf("        if (\$this->value > {$maxSpecifier}) {", $this->maxValue));
+            $minSpecifier = TypeUtil::typeSpecifier($type);
+            $stream->writeLine(sprintf("        if (\$this->value <= {$minSpecifier}) {", $this->minExclusive));
+            $stream->writeLine('            throw new ValidationException(\'value out of bounds\');');
+            $stream->writeLine('        }');
+        }
+
+        if (null !== $this->maxInclusive) {
+            $stream->write("\n");
+            $maxSpecifier = TypeUtil::typeSpecifier($type);
+            $stream->writeLine(sprintf("        if (\$this->value > {$maxSpecifier}) {", $this->maxInclusive));
+            $stream->writeLine('            throw new ValidationException(\'value out of bounds\');');
+            $stream->writeLine('        }');
+        }
+
+        if (null !== $this->maxExclusive) {
+            $stream->write("\n");
+            $maxSpecifier = TypeUtil::typeSpecifier($type);
+            $stream->writeLine(sprintf("        if (\$this->value >= {$maxSpecifier}) {", $this->maxInclusive));
             $stream->writeLine('            throw new ValidationException(\'value out of bounds\');');
             $stream->writeLine('        }');
         }
 
         if (null !== $this->totalDigits) {
             $stream->write("\n");
-            $stream->writeLine(sprintf('        if (%d !== preg_match_all(\'/[0-9]/\', $this->value)) {',
+            $stream->writeLine(sprintf('        if (%d !== preg_match_all(\'/\\d/\', $this->value)) {',
                 $this->totalDigits
             ));
-            $stream->writeLine(sprintf('            throw new ValidationException(\'value must contain %d digits\'',
+            $stream->writeLine(sprintf('            throw new ValidationException(\'value must contain %d digits\');',
                 $this->totalDigits
             ));
             $stream->writeLine('        }');
@@ -1113,7 +1159,7 @@ class ClassBuilder implements AnnotatedObjectInterface
         if (null !== $this->fractionDigits) {
             $stream->write("\n");
             $stream->writeLine(
-                '        $decimals = ((int) $this->value != $this->value) ' .
+                '        $decimals = ((int) $this->value !== $this->value) ' .
                 '? (strlen($this->value) - strpos($this->value, \'.\')) - 1 : 0;'
             );
             $stream->writeLine(sprintf('        if (%d !== $decimals) {', $this->fractionDigits));
@@ -1176,7 +1222,13 @@ class ClassBuilder implements AnnotatedObjectInterface
                 $string = str_replace("\n", "\n            ", wordwrap($string, 90));
                 $wrapped = true;
             }
-            if ($wrapped) {
+
+            if (count($constants) === 1) {
+                $stream->writeLine(sprintf('        if (%s !== $this->value) {', $constants[0]));
+                $stream->writeLine(sprintf('            throw new ValidationException(\'value must be one of %s\');',
+                    $string
+                ));
+            } else if ($wrapped) {
                 $stream->writeLine('        if (!in_array($this->value, [');
                 $stream->writeLine(sprintf('            %s', $string));
                 $stream->writeLine('        ], true)) {');

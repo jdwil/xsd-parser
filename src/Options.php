@@ -5,6 +5,8 @@ namespace JDWil\Xsd;
 
 class Options
 {
+    public $testMode;
+
     public $outputDirectory;
 
     public $debug;
@@ -23,6 +25,7 @@ class Options
 
     public function __construct()
     {
+        $this->testMode = false;
         $this->debug = false;
         $this->verbose = false;
         $this->declareStrictTypes = true;

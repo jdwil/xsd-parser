@@ -5,7 +5,7 @@ namespace JDWil\Xsd\Test\SimpleType;
 
 use JDWil\Xsd\Test\Exception\ValidationException;
 
-class ST_One
+class ST_TDInt
 {
     /**
      * @var int
@@ -13,12 +13,17 @@ class ST_One
     protected $value;
 
     /**
-     * ST_One constructor
+     * ST_TDInt constructor
      * @param int $value
+     * @throws ValidationException
      */
     public function __construct(int $value)
     {
         $this->value = $value;
+
+        if (4 !== preg_match_all('/\d/', $this->value)) {
+            throw new ValidationException('value must contain 4 digits');
+        }
     }
 
     /**

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+    <xsd:simpleType name="ST_Type" final="restriction">
+        <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="one"/>
+            <xsd:enumeration value="two"/>
+            <xsd:enumeration value="three"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name="ST_Types">
+        <xsd:list itemType="ST_Type"/>
+    </xsd:simpleType>
+</xsd:schema>

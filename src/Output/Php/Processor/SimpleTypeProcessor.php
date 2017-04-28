@@ -90,7 +90,7 @@ final class SimpleTypeProcessor extends AbstractProcessor
             list($ns, $typeName) = $this->definition->determineNamespace($type, $list);
             if (!$primitive = TypeUtil::typeToPhpPrimitive($typeName)) {
                 $typeNs = $this->getTypeNamespace($typeName, $ns);
-                $this->class->uses(sprintf('use %s\\%s\\%s', $this->options->namespacePrefix, $typeNs, $typeName));
+                $this->class->uses(sprintf('use %s\\%s\\%s;', $this->options->namespacePrefix, $typeNs, $typeName));
             } else {
                 $typeName = $primitive;
             }

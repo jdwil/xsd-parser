@@ -92,6 +92,7 @@ abstract class AbstractProcessor implements ProcessorInterface
 
     /**
      * @param Restriction $restriction
+     * @throws \JDWil\Xsd\Exception\FileSystemException
      */
     protected function processRestriction(Restriction $restriction)
     {
@@ -99,38 +100,47 @@ abstract class AbstractProcessor implements ProcessorInterface
             $this->initializeValueProperty();
         }
         $this->class->uses(sprintf('use %s\\Exception\\ValidationException;', $this->options->namespacePrefix));
+        $base = $restriction->getBase();
+        $type = $classNs = $ns = '';
+        $this->analyzeType($base, $type, $classNs, $ns);
+        $this->classProperty->type = $type;
+        if (!TypeUtil::isPrimitive($type)) {
+            $this->class->uses(sprintf('use %s\\%s\\%s;', $this->options->namespacePrefix, $classNs, $type));
+        }
 
         /** @var FacetInterface $facet */
         foreach ($restriction->getFacets() as $facet) {
             switch (get_class($facet)) {
                 case MinExclusive::class:
-                    $this->class->setMinValue((int) $facet->getValue() + 1);
-                    $this->classProperty->type = 'int';
+                    $value = $facet->getValue();
+                    settype($value, $type);
+                    $this->class->setMinExclusive($value);
                     break;
 
                 case MinInclusive::class:
-                    $this->class->setMinValue((int) $facet->getValue());
-                    $this->classProperty->type = 'int';
+                    $value = $facet->getValue();
+                    settype($value, $type);
+                    $this->class->setMinInclusive($value);
                     break;
 
                 case MaxExclusive::class:
-                    $this->class->setMaxValue((int) $facet->getValue() - 1);
-                    $this->classProperty->type = 'int';
+                    $value = $facet->getValue();
+                    settype($value, $type);
+                    $this->class->setMaxExclusive($value);
                     break;
 
                 case MaxInclusive::class:
-                    $this->class->setMaxValue((int) $facet->getValue());
-                    $this->classProperty->type = 'int';
+                    $value = $facet->getValue();
+                    settype($value, $type);
+                    $this->class->setMaxInclusive($value);
                     break;
 
                 case TotalDigits::class:
                     $this->class->setTotalDigits((int) $facet->getValue());
-                    $this->classProperty->type = 'int';
                     break;
 
                 case FractionDigits::class:
                     $this->class->setFractionDigits((int) $facet->getValue());
-                    $this->classProperty->type = 'float';
                     break;
 
                 case Length::class:
@@ -313,6 +323,8 @@ _BODY_;
     }
 
     /**
+     * @todo This needs to support some type of double so we don't try to create these classes during testing.
+     *
      * @param string $type
      * @returns bool
      * @throws FileSystemException
@@ -411,9 +423,12 @@ _BODY_;
 
         $classNamespace = $this->getTypeNamespace($name, $namespace);
         if ($namespace === self::XSD_NAMESPACE) {
-            $name = Inflector::classify($name);
-            if ($this->createXsdType($name)) {
+            $classified = Inflector::classify($name);
+            if ($this->createXsdType($classified)) {
                 $classNamespace = 'Xsd';
+                $name = $classified;
+            } else {
+                $name = TypeUtil::typeToPhpPrimitive($name);
             }
         }
 

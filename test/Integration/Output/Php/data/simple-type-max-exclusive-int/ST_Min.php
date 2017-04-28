@@ -5,7 +5,7 @@ namespace JDWil\Xsd\Test\SimpleType;
 
 use JDWil\Xsd\Test\Exception\ValidationException;
 
-class ST_One
+class ST_Min
 {
     /**
      * @var int
@@ -13,12 +13,17 @@ class ST_One
     protected $value;
 
     /**
-     * ST_One constructor
+     * ST_Min constructor
      * @param int $value
+     * @throws ValidationException
      */
     public function __construct(int $value)
     {
         $this->value = $value;
+
+        if ($this->value >= 0) {
+            throw new ValidationException('value out of bounds');
+        }
     }
 
     /**
