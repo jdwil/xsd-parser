@@ -20,24 +20,27 @@ class TypeUtil
 
     /**
      * @param $value
+     * @param bool $lookForReserveWords
      * @return string
      */
-    public static function typeSpecifier($value): string
+    public static function typeSpecifier($value, bool $lookForReserveWords = true): string
     {
-        switch ($value) {
-            case 'bool':
-                return '%s';
+        if ($lookForReserveWords) {
+            switch ($value) {
+                case 'bool':
+                    return '%s';
 
-            case 'string':
-                return "'%s'";
+                case 'string':
+                    return "'%s'";
 
-            case 'float':
-            case 'double':
-                return '%f';
+                case 'float':
+                case 'double':
+                    return '%f';
 
-            case 'int':
-            case 'integer':
-                return '%d';
+                case 'int':
+                case 'integer':
+                    return '%d';
+            }
         }
 
         if (preg_match('/^\-?\d+\.?\d*$/', (string) $value)) {

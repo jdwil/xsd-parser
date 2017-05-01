@@ -24,8 +24,10 @@ use JDWil\Xsd\Facet\WhiteSpace;
 use JDWil\Xsd\Options;
 use JDWil\Xsd\Output\Php\Argument;
 use JDWil\Xsd\Output\Php\ClassBuilder;
+use JDWil\Xsd\Output\Php\InterfaceGenerator;
 use JDWil\Xsd\Output\Php\Method;
 use JDWil\Xsd\Output\Php\Property;
+use JDWil\Xsd\Util\NamespaceUtil;
 use JDWil\Xsd\Util\TypeUtil;
 
 /**
@@ -44,20 +46,27 @@ final class SimpleTypeProcessor extends AbstractProcessor
      * @param SimpleType $element
      * @param Options $options
      * @param Definition $definition
+     * @param InterfaceGenerator $interfaceGenerator
      */
-    public function __construct(SimpleType $element, Options $options, Definition $definition)
-    {
+    public function __construct(
+        SimpleType $element,
+        Options $options,
+        Definition $definition,
+        InterfaceGenerator $interfaceGenerator
+    ) {
         $this->type = $element;
-        parent::__construct($options, $definition);
+        parent::__construct($options, $definition, $interfaceGenerator);
     }
 
     /**
      * @return ClassBuilder
+     * @throws \JDWil\Xsd\Exception\ValidationException
      */
     public function buildClass()
     {
         $this->initializeValueProperty();
 
+        $this->usesInterface(InterfaceGenerator::TYPE_SIMPLE_TYPE);
         $this->class->setSimpleType(true);
         $this->class->setNamespace(sprintf('%s\\SimpleType', $this->options->namespacePrefix));
         $this->class->setClassName($this->type->getName());
@@ -90,7 +99,7 @@ final class SimpleTypeProcessor extends AbstractProcessor
             list($ns, $typeName) = $this->definition->determineNamespace($type, $list);
             if (!$primitive = TypeUtil::typeToPhpPrimitive($typeName)) {
                 $typeNs = $this->getTypeNamespace($typeName, $ns);
-                $this->class->uses(sprintf('use %s\\%s\\%s;', $this->options->namespacePrefix, $typeNs, $typeName));
+                $this->class->uses(NamespaceUtil::classNamespace($this->options, $typeNs, $typeName));
             } else {
                 $typeName = $primitive;
             }
@@ -150,9 +159,9 @@ final class SimpleTypeProcessor extends AbstractProcessor
         }
 
         $this->classProperty->type = null;
-        $this->class->uses(sprintf('use %s\\Exception\\ValidationException;', $this->options->namespacePrefix));
+        $this->usesValidationException();
         foreach ($namespaces as $namespace) {
-            $this->class->uses(sprintf('use %s;', $namespace));
+            $this->class->uses($namespace);
         }
         $conditions = implode(' && ', $statements);
         $validator = <<<_VALIDATOR_

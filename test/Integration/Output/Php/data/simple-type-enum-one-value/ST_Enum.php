@@ -3,10 +3,12 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Test\SimpleType;
 
+use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
 use JDWil\Xsd\Test\Exception\ValidationException;
 use JDWil\Xsd\Test\Xsd\Token;
+use JDWil\Xsd\Test\Interfaces\EnumInterface;
 
-class ST_Enum
+class ST_Enum implements SimpleTypeInterface, EnumInterface
 {
     const VALUE_ONE = 'one';
 
@@ -35,5 +37,13 @@ class ST_Enum
     public function getValue(): Token
     {
         return $this->value;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return sprintf('%s', $this->value);
     }
 }

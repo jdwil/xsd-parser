@@ -6,6 +6,7 @@ use JDWil\Xsd\DOM\Definition;
 use JDWil\Xsd\Event\EventDispatcher;
 use JDWil\Xsd\Options;
 use JDWil\Xsd\Output\Php\ClassBuilder;
+use JDWil\Xsd\Output\Php\InterfaceGenerator;
 use JDWil\Xsd\Output\Php\Processor\ProcessorFactory;
 use JDWil\Xsd\Parser\Parser;
 use JDWil\Xsd\Stream\OutputStream;
@@ -30,6 +31,11 @@ class ClassGenerationTest extends TestCase
     private $options;
 
     /**
+     * @var InterfaceGenerator
+     */
+    private $interfaceGenerator;
+
+    /**
      * @var string
      */
     public $source;
@@ -40,7 +46,8 @@ class ClassGenerationTest extends TestCase
         $this->options->namespacePrefix = 'JDWil\\Xsd\\Test';
         $this->options->outputDirectory = sprintf('%s/Output', __DIR__);
         $this->definition = new Definition();
-        $this->getProcessor = new ProcessorFactory($this->options, $this->definition);
+        $this->interfaceGenerator = new InterfaceGenerator($this->options);
+        $this->getProcessor = new ProcessorFactory($this->options, $this->definition, $this->interfaceGenerator);
     }
 
     public function testClassGeneration()
@@ -51,7 +58,7 @@ class ClassGenerationTest extends TestCase
                 $document = new \DOMDocument();
                 $document->load(sprintf('%s/data/%s/source.xsd', __DIR__, $directory->getFilename()));
                 $this->definition = new Definition();
-                $this->getProcessor = new ProcessorFactory($this->options, $this->definition);
+                $this->getProcessor = new ProcessorFactory($this->options, $this->definition, $this->interfaceGenerator);
                 $dispatcher = EventDispatcher::forNormalization();
                 $parser = new Parser($this->definition, $dispatcher);
                 $parser->parse($document);

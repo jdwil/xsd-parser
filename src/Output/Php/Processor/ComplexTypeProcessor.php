@@ -25,7 +25,9 @@ use JDWil\Xsd\Element\SimpleType;
 use JDWil\Xsd\Exception\ClassNotFoundException;
 use JDWil\Xsd\Options;
 use JDWil\Xsd\Output\Php\ClassBuilder;
+use JDWil\Xsd\Output\Php\InterfaceGenerator;
 use JDWil\Xsd\Output\Php\Property;
+use JDWil\Xsd\Util\NamespaceUtil;
 use JDWil\Xsd\Util\TypeUtil;
 
 /**
@@ -44,14 +46,16 @@ class ComplexTypeProcessor extends AbstractProcessor
      * @param ComplexType $element
      * @param Options $options
      * @param Definition $definition
+     * @param InterfaceGenerator $interfaceGenerator
      */
     public function __construct(
         ComplexType $element,
         Options $options,
-        Definition $definition
+        Definition $definition,
+        InterfaceGenerator $interfaceGenerator
     ) {
         $this->type = $element;
-        parent::__construct($options, $definition);
+        parent::__construct($options, $definition, $interfaceGenerator);
     }
 
     /**
@@ -243,7 +247,7 @@ class ComplexTypeProcessor extends AbstractProcessor
                     $type
                 );
                 $class = $this->buildCollection($type, $namespace, $element->getMinOccurs(), $max);
-                $this->class->uses(sprintf('use %s\\%s;', $class->getNamespace(), $class->getClassName()));
+                $this->class->uses(sprintf('%s\\%s', $class->getNamespace(), $class->getClassName()));
                 foreach ($class->getUses() as $uses) {
                     $this->class->uses($uses);
                 }
@@ -336,7 +340,7 @@ class ComplexTypeProcessor extends AbstractProcessor
             $this->analyzeType($attribute->getType(), $typeName, $typeNs, $ns);
             $property->type = $typeName;
             if (!empty($typeNs)) {
-                $this->class->uses(sprintf('use %s\\%s\\%s;', $this->options->namespacePrefix, $typeNs, $property->type));
+                $this->class->uses(NamespaceUtil::classNamespace($this->options, $typeNs, $property->type));
             }
         }
         $this->class->addProperty($property);

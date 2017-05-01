@@ -10,6 +10,7 @@ use JDWil\Xsd\Element\Annotation;
 use JDWil\Xsd\Element\Appinfo;
 use JDWil\Xsd\Element\ComplexType;
 use JDWil\Xsd\Element\Documentation;
+use JDWil\Xsd\Element\ElementInterface;
 use JDWil\Xsd\Element\Restriction;
 use JDWil\Xsd\Element\SimpleType;
 use JDWil\Xsd\Exception\FileSystemException;
@@ -31,9 +32,11 @@ use JDWil\Xsd\Options;
 use JDWil\Xsd\Output\Php\AnnotatedObjectInterface;
 use JDWil\Xsd\Output\Php\Argument;
 use JDWil\Xsd\Output\Php\ClassBuilder;
+use JDWil\Xsd\Output\Php\InterfaceGenerator;
 use JDWil\Xsd\Output\Php\Method;
 use JDWil\Xsd\Output\Php\Property;
 use JDWil\Xsd\Stream\OutputStream;
+use JDWil\Xsd\Util\NamespaceUtil;
 use JDWil\Xsd\Util\TypeUtil;
 use JDWil\Xsd\ValueObject\Enum;
 
@@ -62,14 +65,21 @@ abstract class AbstractProcessor implements ProcessorInterface
     protected $classProperty;
 
     /**
+     * @var InterfaceGenerator
+     */
+    protected $interfaceGenerator;
+
+    /**
      * AbstractProcessor constructor.
      * @param Options $options
      * @param Definition $definition
+     * @param InterfaceGenerator $interfaceGenerator
      */
-    public function __construct(Options $options, Definition $definition)
+    public function __construct(Options $options, Definition $definition, InterfaceGenerator $interfaceGenerator)
     {
         $this->options = $options;
         $this->definition = $definition;
+        $this->interfaceGenerator = $interfaceGenerator;
         $this->class = new ClassBuilder($options);
     }
 
@@ -93,78 +103,87 @@ abstract class AbstractProcessor implements ProcessorInterface
     /**
      * @param Restriction $restriction
      * @throws \JDWil\Xsd\Exception\FileSystemException
+     * @throws \JDWil\Xsd\Exception\ValidationException
      */
     protected function processRestriction(Restriction $restriction)
     {
         if (null === $this->classProperty) {
             $this->initializeValueProperty();
         }
-        $this->class->uses(sprintf('use %s\\Exception\\ValidationException;', $this->options->namespacePrefix));
+        $this->usesValidationException();
         $base = $restriction->getBase();
         $type = $classNs = $ns = '';
         $this->analyzeType($base, $type, $classNs, $ns);
         $this->classProperty->type = $type;
-        if (!TypeUtil::isPrimitive($type)) {
-            $this->class->uses(sprintf('use %s\\%s\\%s;', $this->options->namespacePrefix, $classNs, $type));
+        if (null !== $type && !TypeUtil::isPrimitive($type)) {
+            $this->class->uses(NamespaceUtil::classNamespace($this->options, $classNs, $type));
         }
 
         /** @var FacetInterface $facet */
         foreach ($restriction->getFacets() as $facet) {
             switch (get_class($facet)) {
                 case MinExclusive::class:
-                    $value = $facet->getValue();
-                    settype($value, $type);
+                    $this->usesInterface(InterfaceGenerator::TYPE_MIN);
+                    $value = $this->setPrimitiveType($facet->getValue(), $type, $restriction);
                     $this->class->setMinExclusive($value);
                     break;
 
                 case MinInclusive::class:
-                    $value = $facet->getValue();
-                    settype($value, $type);
+                    $this->usesInterface(InterfaceGenerator::TYPE_MIN);
+                    $value = $this->setPrimitiveType($facet->getValue(), $type, $restriction);
                     $this->class->setMinInclusive($value);
                     break;
 
                 case MaxExclusive::class:
-                    $value = $facet->getValue();
-                    settype($value, $type);
+                    $this->usesInterface(InterfaceGenerator::TYPE_MAX);
+                    $value = $this->setPrimitiveType($facet->getValue(), $type, $restriction);
                     $this->class->setMaxExclusive($value);
                     break;
 
                 case MaxInclusive::class:
-                    $value = $facet->getValue();
-                    settype($value, $type);
+                    $this->usesInterface(InterfaceGenerator::TYPE_MAX);
+                    $value = $this->setPrimitiveType($facet->getValue(), $type, $restriction);
                     $this->class->setMaxInclusive($value);
                     break;
 
                 case TotalDigits::class:
+                    $this->usesInterface(InterfaceGenerator::TYPE_LENGTH);
                     $this->class->setTotalDigits((int) $facet->getValue());
                     break;
 
                 case FractionDigits::class:
+                    $this->usesInterface(InterfaceGenerator::TYPE_LENGTH);
                     $this->class->setFractionDigits((int) $facet->getValue());
                     break;
 
                 case Length::class:
+                    $this->usesInterface(InterfaceGenerator::TYPE_LENGTH);
                     $this->class->setValueLength((int) $facet->getValue());
                     break;
 
                 case MinLength::class:
+                    $this->usesInterface(InterfaceGenerator::TYPE_LENGTH);
                     $this->class->setValueMinLength((int) $facet->getValue());
                     break;
 
                 case MaxLength::class:
+                    $this->usesInterface(InterfaceGenerator::TYPE_LENGTH);
                     $this->class->setValueMaxLength((int) $facet->getValue());
                     break;
 
                 case Enumeration::class:
+                    $this->usesInterface(InterfaceGenerator::TYPE_ENUM);
                     $this->class->addEnumeration($facet->getValue());
                     $this->class->addConstant(sprintf('VALUE_%s', strtoupper($facet->getValue())), $facet->getValue());
                     break;
 
                 case WhiteSpace::class:
+                    $this->usesInterface(InterfaceGenerator::TYPE_WHITESPACE);
                     $this->class->setWhiteSpace($facet->getValue());
                     break;
 
                 case Pattern::class:
+                    $this->usesInterface(InterfaceGenerator::TYPE_PATTERN);
                     $this->class->setValuePattern($facet->getValue());
                     break;
             }
@@ -175,6 +194,45 @@ abstract class AbstractProcessor implements ProcessorInterface
                 $this->extendSimpleType($child);
             }
         }
+    }
+
+    /**
+     * @param $value
+     * @param string $type
+     * @param AbstractElement $element
+     * @return mixed
+     */
+    protected function setPrimitiveType($value, string $type, AbstractElement $element)
+    {
+        while (!TypeUtil::isPrimitive($type)) {
+            list($namespace, $name) = $this->definition->determineNamespace($type, $element);
+            $reference = $this->definition->findElementByName($name, $namespace);
+
+            if ($newType = $reference->canBeMappedToPrimitive()) {
+                $type = $newType;
+                $this->classProperty->comparisonType = $type;
+            } else {
+                break;
+            }
+        }
+        settype($value, $type);
+
+        return $value;
+    }
+
+    /**
+     * @param string $type One of InterfaceGenerator::TYPE_* constants
+     * @throws \JDWil\Xsd\Exception\ValidationException
+     */
+    protected function usesInterface(string $type)
+    {
+        $this->interfaceGenerator->generateInterface($type);
+        $this->class->addImplements($type);
+        $this->class->uses(NamespaceUtil::classNamespace(
+            $this->options,
+            InterfaceGenerator::INTERFACE_NAMESPACE,
+            $type
+        ));
     }
 
     /**
@@ -209,7 +267,7 @@ abstract class AbstractProcessor implements ProcessorInterface
      */
     protected function extendSimpleType(SimpleType $type)
     {
-        $processor = new SimpleTypeProcessor($type, $this->options, $this->definition);
+        $processor = new SimpleTypeProcessor($type, $this->options, $this->definition, $this->interfaceGenerator);
         $class = $processor->buildClass();
         foreach ($class->getProperties() as $property) {
             $this->class->addProperty($property);
@@ -241,9 +299,9 @@ abstract class AbstractProcessor implements ProcessorInterface
         $builder
             ->setNamespace(sprintf('%s\\ValueObject', $this->options->namespacePrefix))
             ->setClassName($className)
-            ->uses(sprintf('use %s\\Exception\\ValidationException;', $this->options->namespacePrefix))
-            ->uses(sprintf('use %s\\Stream\\OutputStream;', $this->options->namespacePrefix))
-            ->uses(sprintf('use %s;', $namespace))
+            ->uses(NamespaceUtil::classNamespace($this->options, 'Exception', 'ValidationException'))
+            ->uses(NamespaceUtil::classNamespace($this->options, 'Stream', 'OutputStream'))
+            ->uses($namespace)
         ;
 
         if ($this->options->declareStrictTypes) {
@@ -468,12 +526,12 @@ _BODY_;
 
     protected function usesValidationException()
     {
-        $this->class->uses(sprintf('use %s;', $this->validationExceptionNs()));
+        $this->class->uses($this->validationExceptionNs());
     }
 
     protected function usesOutputStream()
     {
-        $this->class->uses(sprintf('use %s\\Stream\\OutputStream;', $this->options->namespacePrefix));
+        $this->class->uses(NamespaceUtil::classNamespace($this->options, 'Stream', 'OutputStream'));
     }
 
     /**
@@ -481,7 +539,7 @@ _BODY_;
      */
     protected function validationExceptionNs(): string
     {
-        return sprintf('%s\\Exception\\ValidationException', $this->options->namespacePrefix);
+        return NamespaceUtil::classNamespace($this->options, 'Exception', 'ValidationException');
     }
 
     protected function createWriteXML()

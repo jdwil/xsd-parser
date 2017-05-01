@@ -29,6 +29,11 @@ class Property implements AnnotatedObjectInterface
     /**
      * @var string
      */
+    public $comparisonType;
+
+    /**
+     * @var string
+     */
     public $namespace;
 
     /**

@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Test\SimpleType;
 
+use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
 use JDWil\Xsd\Test\Exception\ValidationException;
+use JDWil\Xsd\Test\Interfaces\HasLengthInterface;
 
-class ST_TDInt
+class ST_TDInt implements SimpleTypeInterface, HasLengthInterface
 {
     /**
      * @var int
@@ -32,5 +34,13 @@ class ST_TDInt
     public function getValue(): int
     {
         return $this->value;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return sprintf('%d', $this->value);
     }
 }

@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Test\SimpleType;
 
-class ST_Ints
+use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
+
+class ST_Ints implements SimpleTypeInterface
 {
     /**
      * @var int[]

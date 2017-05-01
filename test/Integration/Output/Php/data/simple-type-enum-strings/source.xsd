@@ -5,6 +5,7 @@
             <xsd:enumeration value="one"/>
             <xsd:enumeration value="two"/>
             <xsd:enumeration value="three"/>
+            <xsd:enumeration value="double"/>
         </xsd:restriction>
     </xsd:simpleType>
 </xsd:schema>

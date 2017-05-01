@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Test\SimpleType;
 
+use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
 use JDWil\Xsd\Test\Exception\ValidationException;
+use JDWil\Xsd\Test\Interfaces\HasMaxInterface;
 
-class ST_Min
+class ST_Min implements SimpleTypeInterface, HasMaxInterface
 {
     /**
      * @var int
@@ -32,5 +34,13 @@ class ST_Min
     public function getValue(): int
     {
         return $this->value;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return sprintf('%d', $this->value);
     }
 }

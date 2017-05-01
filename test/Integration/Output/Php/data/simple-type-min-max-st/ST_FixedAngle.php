@@ -5,33 +5,39 @@ namespace JDWil\Xsd\Test\SimpleType;
 
 use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
 use JDWil\Xsd\Test\Exception\ValidationException;
+use JDWil\Xsd\Test\SimpleType\ST_Angle;
 use JDWil\Xsd\Test\Interfaces\HasMinInterface;
+use JDWil\Xsd\Test\Interfaces\HasMaxInterface;
 
-class ST_Min implements SimpleTypeInterface, HasMinInterface
+class ST_FixedAngle implements SimpleTypeInterface, HasMinInterface, HasMaxInterface
 {
     /**
-     * @var int
+     * @var ST_Angle
      */
     protected $value;
 
     /**
-     * ST_Min constructor
-     * @param int $value
+     * ST_FixedAngle constructor
+     * @param ST_Angle $value
      * @throws ValidationException
      */
-    public function __construct(int $value)
+    public function __construct(ST_Angle $value)
     {
         $this->value = $value;
 
-        if ($this->value < 1) {
+        if ($this->value <= -5400000) {
+            throw new ValidationException('value out of bounds');
+        }
+
+        if ($this->value >= 5400000) {
             throw new ValidationException('value out of bounds');
         }
     }
 
     /**
-     * @return int
+     * @return ST_Angle
      */
-    public function getValue(): int
+    public function getValue(): ST_Angle
     {
         return $this->value;
     }

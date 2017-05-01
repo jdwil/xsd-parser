@@ -3,11 +3,12 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Test\SimpleType;
 
+use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
 use JDWil\Xsd\Test\Exception\ValidationException;
 use JDWil\Xsd\Test\SimpleType\ST_One;
 use JDWil\Xsd\Test\SimpleType\ST_Two;
 
-class ST_Union
+class ST_Union implements SimpleTypeInterface
 {
     /**
      * @var mixed
@@ -33,5 +34,13 @@ class ST_Union
     public function getValue()
     {
         return $this->value;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return sprintf('%s', $this->value);
     }
 }

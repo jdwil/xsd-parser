@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Test\SimpleType;
 
+use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
 use JDWil\Xsd\Test\Exception\ValidationException;
 
-class ST_One
+class ST_One implements SimpleTypeInterface
 {
     /**
      * @var int
@@ -27,5 +28,13 @@ class ST_One
     public function getValue(): int
     {
         return $this->value;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return sprintf('%d', $this->value);
     }
 }

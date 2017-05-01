@@ -10,7 +10,9 @@ use JDWil\Xsd\Element\Schema;
 use JDWil\Xsd\Options;
 use JDWil\Xsd\Output\Php\Argument;
 use JDWil\Xsd\Output\Php\ClassBuilder;
+use JDWil\Xsd\Output\Php\InterfaceGenerator;
 use JDWil\Xsd\Output\Php\Method;
+use JDWil\Xsd\Util\NamespaceUtil;
 
 /**
  * Class ElementProcessor
@@ -33,11 +35,16 @@ class ElementProcessor extends AbstractProcessor
      * @param Element $element
      * @param Options $options
      * @param Definition $definition
+     * @param InterfaceGenerator $interfaceGenerator
      */
-    public function __construct(Element $element, Options $options, Definition $definition)
-    {
+    public function __construct(
+        Element $element,
+        Options $options,
+        Definition $definition,
+        InterfaceGenerator $interfaceGenerator
+    ) {
         $this->type = $element;
-        parent::__construct($options, $definition);
+        parent::__construct($options, $definition, $interfaceGenerator);
     }
 
     public function buildClass()
@@ -68,7 +75,7 @@ class ElementProcessor extends AbstractProcessor
         if ($type = $element->getType()) {
             $ns = $this->getTypeNamespace($type);
             $this->class->setClassExtends($type);
-            $this->class->uses(sprintf('use %s\\%s\\%s;', $this->options->namespacePrefix, $ns, $type));
+            $this->class->uses(NamespaceUtil::classNamespace($this->options, $ns, $type));
         }
     }
 

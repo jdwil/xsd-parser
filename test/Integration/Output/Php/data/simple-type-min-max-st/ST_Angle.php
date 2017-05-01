@@ -5,9 +5,8 @@ namespace JDWil\Xsd\Test\SimpleType;
 
 use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
 use JDWil\Xsd\Test\Exception\ValidationException;
-use JDWil\Xsd\Test\Interfaces\HasMinInterface;
 
-class ST_Min implements SimpleTypeInterface, HasMinInterface
+class ST_Angle implements SimpleTypeInterface
 {
     /**
      * @var int
@@ -15,17 +14,12 @@ class ST_Min implements SimpleTypeInterface, HasMinInterface
     protected $value;
 
     /**
-     * ST_Min constructor
+     * ST_Angle constructor
      * @param int $value
-     * @throws ValidationException
      */
     public function __construct(int $value)
     {
         $this->value = $value;
-
-        if ($this->value < 1) {
-            throw new ValidationException('value out of bounds');
-        }
     }
 
     /**

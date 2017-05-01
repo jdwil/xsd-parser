@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Test\SimpleType;
 
+use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
 use JDWil\Xsd\Test\SimpleType\ST_Type;
 
-class ST_Types
+class ST_Types implements SimpleTypeInterface
 {
     /**
      * @var ST_Type

@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 namespace JDWil\Xsd\Test\SimpleType;
 
+use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
 use JDWil\Xsd\Test\Exception\ValidationException;
+use JDWil\Xsd\Test\Interfaces\HasLengthInterface;
 
-class ST_TDFloat
+class ST_TDFloat implements SimpleTypeInterface, HasLengthInterface
 {
     /**
      * @var float
@@ -33,5 +35,13 @@ class ST_TDFloat
     public function getValue(): float
     {
         return $this->value;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return sprintf('%f', $this->value);
     }
 }

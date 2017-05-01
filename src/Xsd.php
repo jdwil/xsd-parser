@@ -10,6 +10,7 @@ use JDWil\Xsd\Exception\DocumentException;
 use JDWil\Xsd\Log\Logger;
 use JDWil\Xsd\Log\LoggerInterface;
 use JDWil\Xsd\Output\Php\ClassGenerator;
+use JDWil\Xsd\Output\Php\InterfaceGenerator;
 use JDWil\Xsd\Output\Php\Processor\ProcessorFactory;
 use JDWil\Xsd\Parser\Parser;
 
@@ -77,7 +78,8 @@ class Xsd
 
         $parser = new Parser($definition, $dispatcher);
         $parser->parse($this->document);
-        $factory = new ProcessorFactory($this->options, $definition);
+        $interfaceGenerator = new InterfaceGenerator($this->options);
+        $factory = new ProcessorFactory($this->options, $definition, $interfaceGenerator);
 
         foreach ($definition->getElements() as $element) {
             if ($element instanceof ComplexType && $element->getName() === 'CT_Sheet') {

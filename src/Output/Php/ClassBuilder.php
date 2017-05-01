@@ -218,8 +218,9 @@ class ClassBuilder implements AnnotatedObjectInterface
      */
     public function uses(string $use): ClassBuilder
     {
-        if (!in_array($use, $this->uses, true)) {
-            $this->uses[] = $use;
+        $useString = sprintf('use %s;', $use);
+        if (!in_array($useString, $this->uses, true)) {
+            $this->uses[] = $useString;
         }
         return $this;
     }
@@ -318,7 +319,9 @@ class ClassBuilder implements AnnotatedObjectInterface
      */
     public function addImplements(string $implements): ClassBuilder
     {
-        $this->classImplements[] = $implements;
+        if (!in_array($implements, $this->classImplements, true)) {
+            $this->classImplements[] = $implements;
+        }
         return $this;
     }
 
@@ -544,9 +547,9 @@ class ClassBuilder implements AnnotatedObjectInterface
         }
 
         if (count($this->classImplements)) {
-            $stream->write(sprintf(' %s', $this->classImplements[0]));
+            $stream->write(sprintf(' implements %s', $this->classImplements[0]));
             for ($iMax = count($this->classImplements), $i = 1; $i < $iMax; $i++) {
-                $stream->write(sprintf(' %s,', $this->classImplements[$i]));
+                $stream->write(sprintf(', %s', $this->classImplements[$i]));
             }
         }
 
@@ -555,7 +558,7 @@ class ClassBuilder implements AnnotatedObjectInterface
 
         if (!empty($this->constants)) {
             foreach ($this->constants as $name => $value) {
-                $specifier = TypeUtil::typeSpecifier($value);
+                $specifier = TypeUtil::typeSpecifier($value, false);
                 if ($this->options->phpVersion === '7.0') {
                     $stream->writeLine(sprintf("    const %s = {$specifier};", $name, $value));
                 } else {
@@ -571,9 +574,31 @@ class ClassBuilder implements AnnotatedObjectInterface
             $this->writeConstructor($stream);
             $this->writeGettersAndSetters($stream);
         }
+
+        if ($this->simpleType && $this->properties[0]->name === 'value') {
+            $this->writeToStringMethod($stream);
+        }
         $this->writeOtherMethods($stream);
 
         $stream->writeLine('}');
+    }
+
+    private function writeToStringMethod(OutputStreamInterface $stream)
+    {
+        $stream->write("\n");
+        $stream->writeLine('    /**');
+        $stream->writeLine('     * @return string');
+        $stream->writeLine('     */');
+        $stream->writeLine('    public function __toString(): string');
+        $stream->writeLine('    {');
+        if ($this->properties[0]->type === 'string') {
+            $stream->writeLine('        return $this->value;');
+        } else {
+            $specifier = TypeUtil::typeSpecifier($this->properties[0]->comparisonType ?? $this->properties[0]->type);
+            $specifier = str_replace("'", '', $specifier);
+            $stream->writeLine(sprintf('        return sprintf(\'%s\', $this->value);', $specifier));
+        }
+        $stream->writeLine('    }');
     }
 
     /**
@@ -1111,7 +1136,7 @@ class ClassBuilder implements AnnotatedObjectInterface
             return;
         }
 
-        $type = $this->properties[0]->type;
+        $type = $this->properties[0]->comparisonType ?? $this->properties[0]->type;
 
         if (null !== $this->minInclusive) {
             $stream->write("\n");
@@ -1140,7 +1165,7 @@ class ClassBuilder implements AnnotatedObjectInterface
         if (null !== $this->maxExclusive) {
             $stream->write("\n");
             $maxSpecifier = TypeUtil::typeSpecifier($type);
-            $stream->writeLine(sprintf("        if (\$this->value >= {$maxSpecifier}) {", $this->maxInclusive));
+            $stream->writeLine(sprintf("        if (\$this->value >= {$maxSpecifier}) {", $this->maxExclusive));
             $stream->writeLine('            throw new ValidationException(\'value out of bounds\');');
             $stream->writeLine('        }');
         }
