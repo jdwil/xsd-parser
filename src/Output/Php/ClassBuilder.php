@@ -214,11 +214,17 @@ class ClassBuilder implements AnnotatedObjectInterface
 
     /**
      * @param string $use
+     * @param string $as
      * @return ClassBuilder
      */
-    public function uses(string $use): ClassBuilder
+    public function uses(string $use, string $as = null): ClassBuilder
     {
-        $useString = sprintf('use %s;', $use);
+        if (null !== $as) {
+            $useString = sprintf('use %s as %s;', $use, $as);
+        } else {
+            $useString = sprintf('use %s;', $use);
+        }
+
         if (!in_array($useString, $this->uses, true)) {
             $this->uses[] = $useString;
         }

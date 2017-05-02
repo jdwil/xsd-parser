@@ -63,24 +63,31 @@ class ClassGenerationTest extends TestCase
                 $parser = new Parser($this->definition, $dispatcher);
                 $parser->parse($document);
 
-                $testDir = new \DirectoryIterator(sprintf('%s/data/%s', __DIR__, $directory->getFilename()));
-                foreach ($testDir as $file) {
-                    if (preg_match('/\.php$/', $file->getFilename())) {
-                        $pieces = explode('.', $file->getFilename());
-                        $className = array_shift($pieces);
-                        $element = $this->definition->findElementByName($className);
-                        $processor = $this->getProcessor->forElement($element);
-                        $stream = $this->getOutputStream();
-                        /** @var ClassBuilder $class */
-                        $class = $processor->buildClass();
-                        $class->writeTo($stream);
-                        $this->assertStringEqualsFile(
-                            sprintf('%s/data/%s/%s', __DIR__, $directory->getFilename(), $file->getFilename()),
-                            $this->source,
-                            sprintf('Failed in %s', $directory->getFilename())
-                        );
-                    }
-                }
+                $this->scanPhpFiles(sprintf('%s/data/%s', __DIR__, $directory->getFilename()));
+            }
+        }
+    }
+
+    private function scanPhpFiles(string $dir)
+    {
+        $testDir = new \DirectoryIterator($dir);
+        foreach ($testDir as $file) {
+            if (preg_match('/\.php$/', $file->getFilename())) {
+                $pieces = explode('.', $file->getFilename());
+                $className = array_shift($pieces);
+                $element = $this->definition->findElementByName($className);
+                $processor = $this->getProcessor->forElement($element);
+                $stream = $this->getOutputStream();
+                /** @var ClassBuilder $class */
+                $class = $processor->buildClass();
+                $class->writeTo($stream);
+                $this->assertStringEqualsFile(
+                    $file->getPathname(),
+                    $this->source,
+                    sprintf('Failed in %s', $file->getPathname())
+                );
+            } else if (!$file->isDot() && $file->isDir()) {
+                $this->scanPhpFiles($file->getPathname());
             }
         }
     }

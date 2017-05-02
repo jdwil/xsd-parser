@@ -68,7 +68,7 @@ final class SimpleTypeProcessor extends AbstractProcessor
 
         $this->usesInterface(InterfaceGenerator::TYPE_SIMPLE_TYPE);
         $this->class->setSimpleType(true);
-        $this->class->setNamespace(sprintf('%s\\SimpleType', $this->options->namespacePrefix));
+        $this->class->setNamespace($this->classNamespace($this->type->getSchema()->getClassNamespace()));
         $this->class->setClassName($this->type->getName());
         $this->initializeClass();
         $this->processClassAttributes();
@@ -98,8 +98,12 @@ final class SimpleTypeProcessor extends AbstractProcessor
         if ($type = $list->getItemType()) {
             list($ns, $typeName) = $this->definition->determineNamespace($type, $list);
             if (!$primitive = TypeUtil::typeToPhpPrimitive($typeName)) {
-                $typeNs = $this->getTypeNamespace($typeName, $ns);
-                $this->class->uses(NamespaceUtil::classNamespace($this->options, $typeNs, $typeName));
+                $listType = $this->definition->findElementByName($typeName, $ns);
+                $this->class->uses(NamespaceUtil::classNamespace(
+                    $this->options,
+                    $listType->getSchema()->getClassNamespace(),
+                    $typeName
+                ));
             } else {
                 $typeName = $primitive;
             }
@@ -153,15 +157,23 @@ final class SimpleTypeProcessor extends AbstractProcessor
                         break;
                 }
             } else {
-                $statements[] = sprintf('!$value instanceof %s', $type);
-                $namespaces[] = sprintf('%s\\%s\\%s', $this->options->namespacePrefix, $ns, $type);
+                $matchType = $type === $this->class->getClassName() ? $ns['as'] : $type;
+                $statements[] = sprintf('!$value instanceof %s', $matchType);
+                $namespace = [
+                    'ns' => NamespaceUtil::classNamespace($this->options, $ns['classNs'], $type)
+                ];
+                if ($type === $this->class->getClassName()) {
+                    $namespace['as'] = $ns['as'];
+                }
+                $namespaces[] = $namespace;
             }
         }
 
         $this->classProperty->type = null;
         $this->usesValidationException();
         foreach ($namespaces as $namespace) {
-            $this->class->uses($namespace);
+            $as = $namespace['as'] ?? null;
+            $this->class->uses($namespace['ns'], $as);
         }
         $conditions = implode(' && ', $statements);
         $validator = <<<_VALIDATOR_

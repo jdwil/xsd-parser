@@ -116,7 +116,11 @@ abstract class AbstractProcessor implements ProcessorInterface
         $this->analyzeType($base, $type, $classNs, $ns);
         $this->classProperty->type = $type;
         if (null !== $type && !TypeUtil::isPrimitive($type)) {
-            $this->class->uses(NamespaceUtil::classNamespace($this->options, $classNs, $type));
+            $as = null;
+            if ($type === $this->class->getClassName()) {
+                $as = str_replace(':', '', $base);
+            }
+            $this->class->uses(NamespaceUtil::classNamespace($this->options, $classNs, $type), $as);
         }
 
         /** @var FacetInterface $facet */
@@ -208,14 +212,15 @@ abstract class AbstractProcessor implements ProcessorInterface
             list($namespace, $name) = $this->definition->determineNamespace($type, $element);
             $reference = $this->definition->findElementByName($name, $namespace);
 
-            if ($newType = $reference->canBeMappedToPrimitive()) {
+            if (null !== $reference && $newType = $reference->canBeMappedToPrimitive()) {
                 $type = $newType;
                 $this->classProperty->comparisonType = $type;
             } else {
                 break;
             }
         }
-        settype($value, $type);
+        // @todo should we ignore this?
+        @settype($value, $type);
 
         return $value;
     }
@@ -440,6 +445,7 @@ _BODY_;
     /**
      * @param array $types
      * @return array
+     * @throws \JDWil\Xsd\Exception\FileSystemException
      */
     protected function normalizeTypes(array $types): array
     {
@@ -451,7 +457,10 @@ _BODY_;
             }
             $type = $classNs = $ns = '';
             $this->analyzeType($name, $type, $classNs, $ns);
-            $ret[$type] = $classNs;
+            $ret[$type] = [
+                'as' => str_replace(':', '', $name),
+                'classNs' => $classNs
+            ];
         }
 
         return $ret;
@@ -479,7 +488,10 @@ _BODY_;
             $namespace = $element->getSchema()->getXmlns();
         }
 
-        $classNamespace = $this->getTypeNamespace($name, $namespace);
+        if (null !== $element) {
+            $classNamespace = $element->getSchema()->getClassNamespace();
+        }
+
         if ($namespace === self::XSD_NAMESPACE) {
             $classified = Inflector::classify($name);
             if ($this->createXsdType($classified)) {

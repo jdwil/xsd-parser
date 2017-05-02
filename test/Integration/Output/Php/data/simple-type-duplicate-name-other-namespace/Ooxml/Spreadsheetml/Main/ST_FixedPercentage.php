@@ -5,10 +5,9 @@ namespace JDWil\Xsd\Test\Ooxml\Spreadsheetml\Main;
 
 use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
 use JDWil\Xsd\Test\Exception\ValidationException;
-use JDWil\Xsd\Test\Ooxml\Spreadsheetml\Main\ST_One;
-use JDWil\Xsd\Test\Ooxml\Spreadsheetml\Main\ST_Two;
+use JDWil\Xsd\Test\Ooxml\OfficeDocument\SharedTypes\ST_FixedPercentage as sST_FixedPercentage;
 
-class ST_Union implements SimpleTypeInterface
+class ST_FixedPercentage implements SimpleTypeInterface
 {
     /**
      * @var mixed
@@ -16,14 +15,14 @@ class ST_Union implements SimpleTypeInterface
     protected $value;
 
     /**
-     * ST_Union constructor
+     * ST_FixedPercentage constructor
      * @param mixed $value
      * @throws ValidationException
      */
     public function __construct($value)
     {
         $this->value = $value;
-        if (!$value instanceof ST_One && !$value instanceof ST_Two) {
+        if (!$value instanceof sST_FixedPercentage) {
             throw new ValidationException('value is not valid for union.');
         }
     }

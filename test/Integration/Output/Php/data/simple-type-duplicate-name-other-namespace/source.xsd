@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns="http://purl.oclc.org/ooxml/spreadsheetml/main"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:s="http://purl.oclc.org/ooxml/officeDocument/sharedTypes"
+            elementFormDefault="qualified">
+    <xsd:import namespace="http://purl.oclc.org/ooxml/officeDocument/sharedTypes" schemaLocation="shared.xsd"/>
+    <xsd:simpleType name="ST_FixedPercentage">
+        <xsd:union memberTypes="s:ST_FixedPercentage"/>
+    </xsd:simpleType>
+</xsd:schema>

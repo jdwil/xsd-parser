@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace JDWil\Xsd\Test\SimpleType;
+namespace JDWil\Xsd\Test\Ooxml\Spreadsheetml\Main;
 
 use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
 use JDWil\Xsd\Test\Exception\ValidationException;
-use JDWil\Xsd\Test\SimpleType\ST_Angle;
+use JDWil\Xsd\Test\Ooxml\Spreadsheetml\Main\ST_Angle;
 use JDWil\Xsd\Test\Interfaces\HasMinInterface;
 use JDWil\Xsd\Test\Interfaces\HasMaxInterface;
 

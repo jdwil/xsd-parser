@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns="http://purl.oclc.org/ooxml/officeDocument/sharedTypes"
+            targetNamespace="http://purl.oclc.org/ooxml/officeDocument/sharedTypes"
+            elementFormDefault="qualified">
+    <xsd:simpleType name="ST_Percentage">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="-?[0-9]+(\.[0-9]+)?%"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name="ST_FixedPercentage">
+        <xsd:restriction base="ST_Percentage">
+            <xsd:pattern value="-?((100)|([0-9][0-9]?))(\.[0-9][0-9]?)?%"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+</xsd:schema>

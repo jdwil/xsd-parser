@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace JDWil\Xsd\Test\SimpleType;
+namespace JDWil\Xsd\Test\Ooxml\Spreadsheetml\Main;
 
 use JDWil\Xsd\Test\Interfaces\SimpleTypeInterface;
-use JDWil\Xsd\Test\SimpleType\ST_Type;
+use JDWil\Xsd\Test\Ooxml\Spreadsheetml\Main\ST_Type;
 
 class ST_Types implements SimpleTypeInterface
 {

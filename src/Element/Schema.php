@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 namespace JDWil\Xsd\Element;
+use Doctrine\Common\Inflector\Inflector;
 
 /**
  * Class Schema
@@ -146,6 +147,26 @@ class Schema extends IdentifiableElement
     public function setXmlns(string $xmlns)
     {
         $this->xmlns = $xmlns;
+    }
+
+    /**
+     * @return string
+     */
+    public function getClassNamespace(): string
+    {
+        if (null === $this->getXmlns()) {
+            return '';
+        }
+
+        // @todo what should be our fallback?
+        $path = parse_url($this->getXmlns(), PHP_URL_PATH);
+        $pieces = explode('/', $path);
+        array_shift($pieces);
+        array_walk($pieces, function (&$string) {
+            $string = Inflector::classify($string);
+        });
+
+        return implode ('\\', $pieces);
     }
 
     /**
