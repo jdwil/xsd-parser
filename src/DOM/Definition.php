@@ -112,7 +112,7 @@ class Definition
     public function findElementByName(string $name, string $namespace = null)
     {
         foreach ($this->getSchemas() as $schema) {
-            if (null !== $namespace && $schema->getXmlns() !== $namespace) {
+            if (null !== $namespace && stripos($schema->getXmlns(), $namespace) === false) {
                 continue;
             }
 

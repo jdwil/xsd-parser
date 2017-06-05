@@ -141,6 +141,7 @@ final class SimpleTypeProcessor extends AbstractProcessor
             $types = [$types];
         }
         $types = $this->normalizeTypes($types);
+        var_dump($types);
         $statements = [];
         $namespaces = [];
         foreach ($types as $type => $ns) {

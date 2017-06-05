@@ -75,7 +75,22 @@ class ClassGenerationTest extends TestCase
             if (preg_match('/\.php$/', $file->getFilename())) {
                 $pieces = explode('.', $file->getFilename());
                 $className = array_shift($pieces);
-                $element = $this->definition->findElementByName($className);
+                $pieces = explode('/', $file->getPath());
+                $namespacePieces = [];
+                for ($i = 0; $i < count($pieces); $i++) {
+                    if ($pieces[$i] === 'data') {
+                        for ($j = $i + 2; $j < count($pieces); $j++) {
+                            $namespacePieces[] = $pieces[$j];
+                        }
+                        break;
+                    }
+                }
+                if (!empty($namespacePieces)) {
+                    $namespace = implode('/', $namespacePieces);
+                    $element = $this->definition->findElementByName($className, $namespace);
+                } else {
+                    $element = $this->definition->findElementByName($className);
+                }
                 $processor = $this->getProcessor->forElement($element);
                 $stream = $this->getOutputStream();
                 /** @var ClassBuilder $class */
